@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -39,4 +40,29 @@ func Connect() *pgxpool.Pool {
 
 	log.Println("Connected to PostgreSQL")
 	return DB
+}
+
+func getEnvAsInt(key string, defaultValue int) int {
+	valueStr := os.Getenv(key)
+	if valueStr == "" {
+		return defaultValue
+	}
+	value, err := strconv.Atoi(valueStr)
+	if err != nil {
+		return defaultValue
+	}
+	return value
+}
+
+func getEnvAsDuration(key, defaultValue string) time.Duration {
+	valueStr := os.Getenv(key)
+	if valueStr == "" {
+		valueStr = defaultValue
+	}
+	duration, err := time.ParseDuration(valueStr)
+	if err != nil {
+		log.Printf("Invalid duration for %s, using default: %s", key, defaultValue)
+		duration, _ = time.ParseDuration(defaultValue)
+	}
+	return duration
 }
