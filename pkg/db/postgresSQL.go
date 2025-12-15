@@ -2,25 +2,18 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func Connect() *pgxpool.Pool {
-	host := getEnv("DB_HOST", "localhost")
-	port := getEnv("DB_PORT", "5432")
-	user := getEnv("DB_USER", "graveyard")
-	password := getEnv("DB_PASSWORD", "graveyard")
-	dbname := getEnv("DB_NAME", "graveyard_db")
-	sslmode := getEnv("DB_SSLMODE", "disable")
-
-	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
-		user, password, host, port, dbname, sslmode)
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		log.Fatal("DATABASE_URL environment variable not set")
+	}
 
 	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
@@ -46,36 +39,4 @@ func Connect() *pgxpool.Pool {
 
 	log.Println("Connected to PostgreSQL")
 	return DB
-}
-
-func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return defaultValue
-}
-
-func getEnvAsInt(key string, defaultValue int) int {
-	valueStr := os.Getenv(key)
-	if valueStr == "" {
-		return defaultValue
-	}
-	value, err := strconv.Atoi(valueStr)
-	if err != nil {
-		return defaultValue
-	}
-	return value
-}
-
-func getEnvAsDuration(key, defaultValue string) time.Duration {
-	valueStr := os.Getenv(key)
-	if valueStr == "" {
-		valueStr = defaultValue
-	}
-	duration, err := time.ParseDuration(valueStr)
-	if err != nil {
-		log.Printf("Invalid duration for %s, using default: %s", key, defaultValue)
-		duration, _ = time.ParseDuration(defaultValue)
-	}
-	return duration
 }

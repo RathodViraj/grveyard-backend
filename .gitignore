@@ -1,2 +1,4 @@
 .env
+.env.local
+pkg/db/postgresSQL.local.go
 *.log
