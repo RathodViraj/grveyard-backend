@@ -1,0 +1,718 @@
+basePath: /
+definitions:
+  assets.Asset:
+    properties:
+      asset_type:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      image_url:
+        type: string
+      is_active:
+        type: boolean
+      is_negotiable:
+        type: boolean
+      is_sold:
+        type: boolean
+      price:
+        type: number
+      startup_id:
+        type: integer
+      title:
+        type: string
+    type: object
+  assets.AssetList:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/assets.Asset'
+        type: array
+      limit:
+        type: integer
+      page:
+        type: integer
+      total:
+        type: integer
+    type: object
+  assets.createAssetRequest:
+    properties:
+      asset_type:
+        type: string
+      description:
+        type: string
+      image_url:
+        type: string
+      is_negotiable:
+        type: boolean
+      is_sold:
+        type: boolean
+      price:
+        type: number
+      startup_id:
+        type: integer
+      title:
+        type: string
+    required:
+    - asset_type
+    - startup_id
+    - title
+    type: object
+  assets.updateAssetRequest:
+    properties:
+      asset_type:
+        type: string
+      description:
+        type: string
+      image_url:
+        type: string
+      is_negotiable:
+        type: boolean
+      is_sold:
+        type: boolean
+      price:
+        type: number
+      title:
+        type: string
+    required:
+    - asset_type
+    - title
+    type: object
+  response.APIResponse:
+    properties:
+      created_at:
+        type: string
+      data: {}
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  startups.Startup:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      logo_url:
+        type: string
+      name:
+        type: string
+      owner_id:
+        type: integer
+      status:
+        type: string
+    type: object
+  startups.StartupList:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/startups.Startup'
+        type: array
+      limit:
+        type: integer
+      page:
+        type: integer
+      total:
+        type: integer
+    type: object
+  startups.createStartupRequest:
+    properties:
+      description:
+        type: string
+      logo_url:
+        type: string
+      name:
+        type: string
+      owner_id:
+        type: integer
+      status:
+        type: string
+    required:
+    - name
+    - owner_id
+    type: object
+  startups.updateStartupRequest:
+    properties:
+      description:
+        type: string
+      logo_url:
+        type: string
+      name:
+        type: string
+      status:
+        type: string
+    required:
+    - name
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@graveyard.io
+    name: API Support
+  description: REST API for failed startup marketplace - buy and sell startup assets
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Graveyard API
+  version: "1.0"
+paths:
+  /assets:
+    get:
+      description: Retrieves a paginated list of active assets with optional filters
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by startup ID
+        in: query
+        name: startup_id
+        type: integer
+      - description: Filter by asset type
+        enum:
+        - research
+        - codebase
+        - domain
+        - product
+        - data
+        - other
+        in: query
+        name: asset_type
+        type: string
+      - description: Filter by sold status
+        in: query
+        name: is_sold
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Assets retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/assets.AssetList'
+              type: object
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: List all assets
+      tags:
+      - assets
+    post:
+      consumes:
+      - application/json
+      description: Creates a new asset for sale under a startup
+      parameters:
+      - description: Asset creation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/assets.createAssetRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Asset created successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/assets.Asset'
+              type: object
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Create a new asset
+      tags:
+      - assets
+  /assets/{id}:
+    delete:
+      description: Deletes an asset by ID
+      parameters:
+      - description: Asset ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Asset deleted successfully
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Invalid asset ID
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "404":
+          description: Asset not found
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Delete an asset
+      tags:
+      - assets
+    get:
+      description: Retrieves a single asset by its ID
+      parameters:
+      - description: Asset ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Asset retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/assets.Asset'
+              type: object
+        "400":
+          description: Invalid asset ID
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "404":
+          description: Asset not found
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Get asset by ID
+      tags:
+      - assets
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing asset's details
+      parameters:
+      - description: Asset ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Asset update request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/assets.updateAssetRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Asset updated successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/assets.Asset'
+              type: object
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "404":
+          description: Asset not found
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Update an asset
+      tags:
+      - assets
+  /assets/{id}/mark-sold:
+    patch:
+      description: Marks an asset as sold (sets is_sold to true). Fails if asset is
+        already sold or inactive.
+      parameters:
+      - description: Asset ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Asset marked as sold successfully
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Invalid asset ID
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "404":
+          description: Asset not found
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "409":
+          description: Asset already marked as sold
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Mark asset as sold
+      tags:
+      - buy
+  /assets/{id}/unlist:
+    patch:
+      description: Soft deletes an asset by setting is_active to false. Asset won't
+        appear in marketplace listings.
+      parameters:
+      - description: Asset ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Asset unlisted successfully
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Invalid asset ID
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "404":
+          description: Asset not found
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Unlist an asset
+      tags:
+      - buy
+  /startups:
+    get:
+      description: Retrieves a paginated list of all startups
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Startups retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/startups.StartupList'
+              type: object
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: List all startups
+      tags:
+      - startups
+    post:
+      consumes:
+      - application/json
+      description: Creates a new startup with the provided details
+      parameters:
+      - description: Startup creation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/startups.createStartupRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Startup created successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/startups.Startup'
+              type: object
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Create a new startup
+      tags:
+      - startups
+  /startups/{id}:
+    delete:
+      description: Deletes a startup by ID
+      parameters:
+      - description: Startup ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Startup deleted successfully
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Invalid startup ID
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "404":
+          description: Startup not found
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Delete a startup
+      tags:
+      - startups
+    get:
+      description: Retrieves a single startup by its ID
+      parameters:
+      - description: Startup ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Startup retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/startups.Startup'
+              type: object
+        "400":
+          description: Invalid startup ID
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "404":
+          description: Startup not found
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Get startup by ID
+      tags:
+      - startups
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing startup's details
+      parameters:
+      - description: Startup ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Startup update request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/startups.updateStartupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Startup updated successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/startups.Startup'
+              type: object
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "404":
+          description: Startup not found
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Update a startup
+      tags:
+      - startups
+  /startups/{id}/assets:
+    get:
+      description: Retrieves a paginated list of active assets for a specific startup
+      parameters:
+      - description: Startup ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Startup assets retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/assets.AssetList'
+              type: object
+        "400":
+          description: Invalid startup ID
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: List assets by startup
+      tags:
+      - assets
+  /startups/{id}/mark-sold:
+    patch:
+      description: Marks a startup as sold (sets status to 'sold'). Fails if startup
+        is already sold.
+      parameters:
+      - description: Startup ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Startup marked as sold successfully
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Invalid startup ID
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "404":
+          description: Startup not found
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "409":
+          description: Startup already marked as sold
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Mark startup as sold
+      tags:
+      - buy
+  /startups/{id}/unlist:
+    patch:
+      description: Unlists a startup by setting status to 'failed'. Startup won't
+        be prominently displayed.
+      parameters:
+      - description: Startup ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Startup unlisted successfully
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Invalid startup ID
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "404":
+          description: Startup not found
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Unlist a startup
+      tags:
+      - buy
+schemes:
+- http
+- https
+swagger: "2.0"
