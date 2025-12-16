@@ -3,8 +3,14 @@ CREATE TABLE IF NOT EXISTS users (
     name TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
     role TEXT NOT NULL CHECK (role IN ('buyer', 'founder')),
+    password_hash TEXT NOT NULL,
+    profile_pic_url TEXT,
+    uuid TEXT,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+CREATE INDEX IF NOT EXISTS idx_users_is_deleted ON users(is_deleted);
 
 CREATE TABLE IF NOT EXISTS startups (
     id SERIAL PRIMARY KEY,

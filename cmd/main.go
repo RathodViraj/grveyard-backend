@@ -3,7 +3,10 @@ package main
 import (
 	"log"
 	"os"
+	"strings"
+	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	swaggerFiles "github.com/swaggo/files"
@@ -14,6 +17,7 @@ import (
 	"grveyard/pkg/buy"
 	"grveyard/pkg/db"
 	"grveyard/pkg/startups"
+	"grveyard/pkg/users"
 )
 
 // @title           Graveyard API
@@ -47,12 +51,50 @@ func main() {
 	buyService := buy.NewBuyService(buyRepo)
 	buyHandler := buy.NewBuyHandler(buyService)
 
+	usersRepo := users.NewPostgresUserRepository(pool)
+	usersService := users.NewUserService(usersRepo)
+	usersHandler := users.NewUserHandler(usersService)
+
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery())
+
+	// CORS configuration
+	allowedOrigins := os.Getenv("CORS_ALLOWED_ORIGINS")
+	var origins []string
+	if allowedOrigins == "" {
+		origins = []string{"*"}
+	} else {
+		// comma-separated list
+		parts := strings.Split(allowedOrigins, ",")
+		origins = make([]string, 0, len(parts))
+		for _, p := range parts {
+			o := strings.TrimSpace(p)
+			if o != "" {
+				origins = append(origins, o)
+			}
+		}
+		if len(origins) == 0 {
+			origins = []string{"*"}
+		}
+	}
+
+	allowCreds := strings.EqualFold(os.Getenv("CORS_ALLOW_CREDENTIALS"), "true")
+
+	corsCfg := cors.Config{
+		AllowOrigins:     origins,
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: allowCreds,
+		MaxAge:           12 * time.Hour,
+	}
+	// If wildcard '*' is used with credentials=false, it's valid; otherwise list explicit origins
+	router.Use(cors.New(corsCfg))
 
 	startupsHandler.RegisterRoutes(router)
 	assetsHandler.RegisterRoutes(router)
 	buyHandler.RegisterRoutes(router)
+	usersHandler.RegisterRoutes(router)
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 

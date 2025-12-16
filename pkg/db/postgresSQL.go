@@ -2,9 +2,11 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -39,6 +41,16 @@ func Connect() *pgxpool.Pool {
 	}
 
 	log.Println("Connected to PostgreSQL")
+
+	// Apply schema on startup unless explicitly disabled
+	if !strings.EqualFold(os.Getenv("APPLY_SCHEMA_ON_START"), "false") {
+		schemaCtx, cancelSchema := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancelSchema()
+		if err := ApplySchema(schemaCtx, DB); err != nil {
+			log.Fatal("Failed to apply schema:", err)
+		}
+	}
+
 	return DB
 }
 
@@ -65,4 +77,30 @@ func getEnvAsDuration(key, defaultValue string) time.Duration {
 		duration, _ = time.ParseDuration(defaultValue)
 	}
 	return duration
+}
+
+// ApplySchema reads the SQL schema file and executes it against the provided pool.
+// Default schema path: pkg/db/schema.sql. Override with SCHEMA_PATH.
+func ApplySchema(ctx context.Context, pool *pgxpool.Pool) error {
+	schemaPath := os.Getenv("SCHEMA_PATH")
+	if schemaPath == "" {
+		schemaPath = "pkg/db/schema.sql"
+	}
+
+	bytes, err := os.ReadFile(schemaPath)
+	if err != nil {
+		return fmt.Errorf("read schema file: %w", err)
+	}
+
+	sql := strings.TrimSpace(string(bytes))
+	if sql == "" {
+		return fmt.Errorf("schema file is empty: %s", schemaPath)
+	}
+
+	if _, err := pool.Exec(ctx, sql); err != nil {
+		return fmt.Errorf("execute schema: %w", err)
+	}
+
+	log.Println("Schema applied from", schemaPath)
+	return nil
 }

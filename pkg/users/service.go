@@ -1,0 +1,76 @@
+package users
+
+import (
+	"context"
+	"errors"
+
+	"golang.org/x/crypto/bcrypt"
+)
+
+type UserService interface {
+	CreateUser(ctx context.Context, name, email, role, password, profilePicURL, uuid string) (User, error)
+	UpdateUser(ctx context.Context, u User) (User, error)
+	DeleteUser(ctx context.Context, id int64) error
+	GetUserByID(ctx context.Context, id int64) (User, error)
+	ListUsers(ctx context.Context, page, limit int) ([]User, int64, error)
+	Login(ctx context.Context, email, password, newUUID string) (User, error)
+}
+
+type userService struct {
+	repo UserRepository
+}
+
+func NewUserService(repo UserRepository) UserService {
+	return &userService{repo: repo}
+}
+
+func (s *userService) CreateUser(ctx context.Context, name, email, role, password, profilePicURL, uuid string) (User, error) {
+	if role != "buyer" && role != "founder" {
+		return User{}, errors.New("invalid role")
+	}
+	hashBytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return User{}, err
+	}
+	return s.repo.CreateUser(ctx, name, email, role, string(hashBytes), profilePicURL, uuid)
+}
+
+func (s *userService) UpdateUser(ctx context.Context, u User) (User, error) {
+	if u.Role != "" && u.Role != "buyer" && u.Role != "founder" {
+		return User{}, errors.New("invalid role")
+	}
+	return s.repo.UpdateUser(ctx, u)
+}
+
+func (s *userService) DeleteUser(ctx context.Context, id int64) error {
+	return s.repo.DeleteUser(ctx, id)
+}
+
+func (s *userService) GetUserByID(ctx context.Context, id int64) (User, error) {
+	return s.repo.GetUserByID(ctx, id)
+}
+
+func (s *userService) ListUsers(ctx context.Context, page, limit int) ([]User, int64, error) {
+	if page < 1 {
+		page = 1
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+	offset := (page - 1) * limit
+	return s.repo.ListUsers(ctx, limit, offset)
+}
+
+func (s *userService) Login(ctx context.Context, email, password, newUUID string) (User, error) {
+	id, hash, err := s.repo.GetUserAuthByEmail(ctx, email)
+	if err != nil {
+		if errors.Is(err, ErrUserNotFound) {
+			return User{}, errors.New("invalid credentials")
+		}
+		return User{}, err
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)); err != nil {
+		return User{}, errors.New("invalid credentials")
+	}
+	return s.repo.UpdateUserUUID(ctx, id, newUUID)
+}
