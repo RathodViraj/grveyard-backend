@@ -26,7 +26,7 @@ import (
 
 // @contact.email  virajrathod631@gmail.com
 
-// @host      localhost:8080
+// @host      grveyard-backend.onrender.com
 // @BasePath  /
 
 // @schemes   http https

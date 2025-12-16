@@ -226,7 +226,7 @@ definitions:
     required:
     - name
     type: object
-host: localhost:8080
+host: grveyard-backend.onrender.com
 info:
   contact:
     email: virajrathod631@gmail.com

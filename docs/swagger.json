@@ -12,7 +12,7 @@
         },
         "version": "1.0"
     },
-    "host": "localhost:8080",
+    "host": "grveyard-backend.onrender.com",
     "basePath": "/",
     "paths": {
         "/assets": {
