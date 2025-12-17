@@ -15,12 +15,14 @@ var ErrUserNotFound = errors.New("user not found")
 type UserRepository interface {
 	CreateUser(ctx context.Context, name, email, role, passwordHash, profilePicURL, uuid string) (User, error)
 	UpdateUser(ctx context.Context, u User) (User, error)
+	UpdateUserByUUID(ctx context.Context, currentUUID string, u User) (User, error)
 	DeleteUser(ctx context.Context, id int64) error
+	DeleteUserByUUID(ctx context.Context, uuid string) error
 	GetUserByID(ctx context.Context, id int64) (User, error)
+	GetUserByUUID(ctx context.Context, uuid string) (User, error)
 	ListUsers(ctx context.Context, limit, offset int) ([]User, int64, error)
 	// Auth helpers
 	GetUserAuthByEmail(ctx context.Context, email string) (int64, string, error)
-	UpdateUserUUID(ctx context.Context, id int64, uuid string) (User, error)
 }
 
 type postgresUserRepository struct {
@@ -61,8 +63,36 @@ func (r *postgresUserRepository) UpdateUser(ctx context.Context, u User) (User, 
 	return out, nil
 }
 
+func (r *postgresUserRepository) UpdateUserByUUID(ctx context.Context, currentUUID string, u User) (User, error) {
+	query := `UPDATE users
+			  SET name = $1, role = $2, profile_pic_url = $3, uuid = $4
+			  WHERE uuid = $5 AND is_deleted = false
+			  RETURNING id, name, email, role, profile_pic_url, uuid, created_at`
+	row := r.pool.QueryRow(ctx, query, u.Name, u.Role, u.ProfilePicURL, u.UUID, currentUUID)
+
+	var out User
+	if err := row.Scan(&out.ID, &out.Name, &out.Email, &out.Role, &out.ProfilePicURL, &out.UUID, &out.CreatedAt); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return User{}, ErrUserNotFound
+		}
+		return User{}, err
+	}
+	return out, nil
+}
+
 func (r *postgresUserRepository) DeleteUser(ctx context.Context, id int64) error {
 	cmd, err := r.pool.Exec(ctx, "UPDATE users SET is_deleted = true WHERE id = $1 AND is_deleted = false", id)
+	if err != nil {
+		return err
+	}
+	if cmd.RowsAffected() == 0 {
+		return ErrUserNotFound
+	}
+	return nil
+}
+
+func (r *postgresUserRepository) DeleteUserByUUID(ctx context.Context, uuid string) error {
+	cmd, err := r.pool.Exec(ctx, "UPDATE users SET is_deleted = true WHERE uuid = $1 AND is_deleted = false", uuid)
 	if err != nil {
 		return err
 	}
@@ -77,6 +107,22 @@ func (r *postgresUserRepository) GetUserByID(ctx context.Context, id int64) (Use
               FROM users
               WHERE id = $1 AND is_deleted = false`
 	row := r.pool.QueryRow(ctx, query, id)
+
+	var u User
+	if err := row.Scan(&u.ID, &u.Name, &u.Email, &u.Role, &u.ProfilePicURL, &u.UUID, &u.CreatedAt); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return User{}, ErrUserNotFound
+		}
+		return User{}, err
+	}
+	return u, nil
+}
+
+func (r *postgresUserRepository) GetUserByUUID(ctx context.Context, uuid string) (User, error) {
+	query := `SELECT id, name, email, role, profile_pic_url, uuid, created_at
+			  FROM users
+			  WHERE uuid = $1 AND is_deleted = false`
+	row := r.pool.QueryRow(ctx, query, uuid)
 
 	var u User
 	if err := row.Scan(&u.ID, &u.Name, &u.Email, &u.Role, &u.ProfilePicURL, &u.UUID, &u.CreatedAt); err != nil {
@@ -134,15 +180,4 @@ func (r *postgresUserRepository) GetUserAuthByEmail(ctx context.Context, email s
 	return id, hash, nil
 }
 
-func (r *postgresUserRepository) UpdateUserUUID(ctx context.Context, id int64, uuid string) (User, error) {
-	row := r.pool.QueryRow(ctx, `UPDATE users SET uuid = $1 WHERE id = $2 AND is_deleted = false
-								 RETURNING id, name, email, role, profile_pic_url, uuid, created_at`, uuid, id)
-	var u User
-	if err := row.Scan(&u.ID, &u.Name, &u.Email, &u.Role, &u.ProfilePicURL, &u.UUID, &u.CreatedAt); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return User{}, ErrUserNotFound
-		}
-		return User{}, err
-	}
-	return u, nil
-}
+// Removed UpdateUserUUID: login no longer changes UUID

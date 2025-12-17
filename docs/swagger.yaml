@@ -223,12 +223,9 @@ definitions:
         type: string
       password:
         type: string
-      uuid:
-        type: string
     required:
     - email
     - password
-    - uuid
     type: object
   users.updateUserRequest:
     properties:
@@ -895,14 +892,14 @@ paths:
       summary: Create user
       tags:
       - users
-  /users/{id}:
+  /users/{uuid}:
     delete:
       parameters:
-      - description: User ID
+      - description: User UUID
         in: path
-        name: id
+        name: uuid
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -918,16 +915,16 @@ paths:
           description: Not Found
           schema:
             $ref: '#/definitions/response.APIResponse'
-      summary: Delete user
+      summary: Delete user (by UUID)
       tags:
       - users
     get:
       parameters:
-      - description: User ID
+      - description: User UUID
         in: path
-        name: id
+        name: uuid
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -948,18 +945,18 @@ paths:
           description: Not Found
           schema:
             $ref: '#/definitions/response.APIResponse'
-      summary: Get user by ID
+      summary: Get user by UUID
       tags:
       - users
     put:
       consumes:
       - application/json
       parameters:
-      - description: User ID
+      - description: User UUID
         in: path
-        name: id
+        name: uuid
         required: true
-        type: integer
+        type: string
       - description: Update user request
         in: body
         name: request
@@ -990,7 +987,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.APIResponse'
-      summary: Update user
+      summary: Update user (by UUID)
       tags:
       - users
   /users/login:
@@ -998,7 +995,7 @@ paths:
       consumes:
       - application/json
       parameters:
-      - description: Login request with firebase uuid
+      - description: Login request
         in: body
         name: request
         required: true
@@ -1028,7 +1025,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.APIResponse'
-      summary: Login user (verify and update uuid)
+      summary: Login user (verify password)
       tags:
       - users
   /verifyOTP:

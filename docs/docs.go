@@ -1041,10 +1041,10 @@ const docTemplate = `{
                 "tags": [
                     "users"
                 ],
-                "summary": "Login user (verify and update uuid)",
+                "summary": "Login user (verify password)",
                 "parameters": [
                     {
-                        "description": "Login request with firebase uuid",
+                        "description": "Login request",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -1093,7 +1093,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/{id}": {
+        "/users/{uuid}": {
             "get": {
                 "produces": [
                     "application/json"
@@ -1101,12 +1101,12 @@ const docTemplate = `{
                 "tags": [
                     "users"
                 ],
-                "summary": "Get user by ID",
+                "summary": "Get user by UUID",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "User ID",
-                        "name": "id",
+                        "type": "string",
+                        "description": "User UUID",
+                        "name": "uuid",
                         "in": "path",
                         "required": true
                     }
@@ -1154,12 +1154,12 @@ const docTemplate = `{
                 "tags": [
                     "users"
                 ],
-                "summary": "Update user",
+                "summary": "Update user (by UUID)",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "User ID",
-                        "name": "id",
+                        "type": "string",
+                        "description": "User UUID",
+                        "name": "uuid",
                         "in": "path",
                         "required": true
                     },
@@ -1219,12 +1219,12 @@ const docTemplate = `{
                 "tags": [
                     "users"
                 ],
-                "summary": "Delete user",
+                "summary": "Delete user (by UUID)",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "User ID",
-                        "name": "id",
+                        "type": "string",
+                        "description": "User UUID",
+                        "name": "uuid",
                         "in": "path",
                         "required": true
                     }
@@ -1631,17 +1631,13 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "email",
-                "password",
-                "uuid"
+                "password"
             ],
             "properties": {
                 "email": {
                     "type": "string"
                 },
                 "password": {
-                    "type": "string"
-                },
-                "uuid": {
                     "type": "string"
                 }
             }

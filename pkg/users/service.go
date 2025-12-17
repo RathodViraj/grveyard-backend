@@ -10,10 +10,13 @@ import (
 type UserService interface {
 	CreateUser(ctx context.Context, name, email, role, password, profilePicURL, uuid string) (User, error)
 	UpdateUser(ctx context.Context, u User) (User, error)
+	UpdateUserByUUID(ctx context.Context, currentUUID string, u User) (User, error)
 	DeleteUser(ctx context.Context, id int64) error
+	DeleteUserByUUID(ctx context.Context, uuid string) error
 	GetUserByID(ctx context.Context, id int64) (User, error)
+	GetUserByUUID(ctx context.Context, uuid string) (User, error)
 	ListUsers(ctx context.Context, page, limit int) ([]User, int64, error)
-	Login(ctx context.Context, email, password, newUUID string) (User, error)
+	Login(ctx context.Context, email, password string) (User, error)
 }
 
 type userService struct {
@@ -42,12 +45,31 @@ func (s *userService) UpdateUser(ctx context.Context, u User) (User, error) {
 	return s.repo.UpdateUser(ctx, u)
 }
 
+func (s *userService) UpdateUserByUUID(ctx context.Context, currentUUID string, u User) (User, error) {
+	if u.Role != "" && u.Role != "buyer" && u.Role != "founder" {
+		return User{}, errors.New("invalid role")
+	}
+	// Ensure uuid is set; if empty, keep current
+	if u.UUID == "" {
+		u.UUID = currentUUID
+	}
+	return s.repo.UpdateUserByUUID(ctx, currentUUID, u)
+}
+
 func (s *userService) DeleteUser(ctx context.Context, id int64) error {
 	return s.repo.DeleteUser(ctx, id)
 }
 
+func (s *userService) DeleteUserByUUID(ctx context.Context, uuid string) error {
+	return s.repo.DeleteUserByUUID(ctx, uuid)
+}
+
 func (s *userService) GetUserByID(ctx context.Context, id int64) (User, error) {
 	return s.repo.GetUserByID(ctx, id)
+}
+
+func (s *userService) GetUserByUUID(ctx context.Context, uuid string) (User, error) {
+	return s.repo.GetUserByUUID(ctx, uuid)
 }
 
 func (s *userService) ListUsers(ctx context.Context, page, limit int) ([]User, int64, error) {
@@ -61,7 +83,7 @@ func (s *userService) ListUsers(ctx context.Context, page, limit int) ([]User, i
 	return s.repo.ListUsers(ctx, limit, offset)
 }
 
-func (s *userService) Login(ctx context.Context, email, password, newUUID string) (User, error) {
+func (s *userService) Login(ctx context.Context, email, password string) (User, error) {
 	id, hash, err := s.repo.GetUserAuthByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, ErrUserNotFound) {
@@ -72,5 +94,6 @@ func (s *userService) Login(ctx context.Context, email, password, newUUID string
 	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)); err != nil {
 		return User{}, errors.New("invalid credentials")
 	}
-	return s.repo.UpdateUserUUID(ctx, id, newUUID)
+	// Return user as-is, UUID remains unchanged
+	return s.repo.GetUserByID(ctx, id)
 }

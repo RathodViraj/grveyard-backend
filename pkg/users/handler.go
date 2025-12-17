@@ -20,10 +20,10 @@ func NewUserHandler(service UserService) *UserHandler {
 func (h *UserHandler) RegisterRoutes(router *gin.Engine) {
 	router.POST("/users", h.createUser)
 	router.POST("/users/login", h.login)
-	router.PUT("/users/:id", h.updateUser)
-	router.DELETE("/users/:id", h.deleteUser)
+	router.PUT("/users/:uuid", h.updateUser)
+	router.DELETE("/users/:uuid", h.deleteUser)
 	router.GET("/users", h.listUsers)
-	router.GET("/users/:id", h.getUserByID)
+	router.GET("/users/:uuid", h.getUserByUUID)
 }
 
 type createUserRequest struct {
@@ -45,7 +45,6 @@ type updateUserRequest struct {
 type loginRequest struct {
 	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
-	UUID     string `json:"uuid" binding:"required"`
 }
 
 // @Summary      Create user
@@ -72,21 +71,21 @@ func (h *UserHandler) createUser(c *gin.Context) {
 	response.SendAPIResponse(c, http.StatusCreated, true, "user created", u)
 }
 
-// @Summary      Update user
+// @Summary      Update user (by UUID)
 // @Tags         users
 // @Accept       json
 // @Produce      json
-// @Param        id path int true "User ID"
+// @Param        uuid path string true "User UUID"
 // @Param        request body updateUserRequest true "Update user request"
 // @Success      200 {object} response.APIResponse{data=User}
 // @Failure      400 {object} response.APIResponse
 // @Failure      404 {object} response.APIResponse
 // @Failure      500 {object} response.APIResponse
-// @Router       /users/{id} [put]
+// @Router       /users/{uuid} [put]
 func (h *UserHandler) updateUser(c *gin.Context) {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil || id <= 0 {
-		response.SendAPIResponse(c, http.StatusBadRequest, false, "invalid user id", nil)
+	currentUUID := c.Param("uuid")
+	if currentUUID == "" {
+		response.SendAPIResponse(c, http.StatusBadRequest, false, "invalid user uuid", nil)
 		return
 	}
 
@@ -96,8 +95,7 @@ func (h *UserHandler) updateUser(c *gin.Context) {
 		return
 	}
 
-	u, err := h.service.UpdateUser(c.Request.Context(), User{
-		ID:            id,
+	u, err := h.service.UpdateUserByUUID(c.Request.Context(), currentUUID, User{
 		Name:          req.Name,
 		Role:          req.Role,
 		ProfilePicURL: req.ProfilePicURL,
@@ -114,22 +112,22 @@ func (h *UserHandler) updateUser(c *gin.Context) {
 	response.SendAPIResponse(c, http.StatusOK, true, "user updated", u)
 }
 
-// @Summary      Delete user
+// @Summary      Delete user (by UUID)
 // @Tags         users
 // @Produce      json
-// @Param        id path int true "User ID"
+// @Param        uuid path string true "User UUID"
 // @Success      200 {object} response.APIResponse
 // @Failure      400 {object} response.APIResponse
 // @Failure      404 {object} response.APIResponse
-// @Router       /users/{id} [delete]
+// @Router       /users/{uuid} [delete]
 func (h *UserHandler) deleteUser(c *gin.Context) {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil || id <= 0 {
-		response.SendAPIResponse(c, http.StatusBadRequest, false, "invalid user id", nil)
+	currentUUID := c.Param("uuid")
+	if currentUUID == "" {
+		response.SendAPIResponse(c, http.StatusBadRequest, false, "invalid user uuid", nil)
 		return
 	}
 
-	if err := h.service.DeleteUser(c.Request.Context(), id); err != nil {
+	if err := h.service.DeleteUserByUUID(c.Request.Context(), currentUUID); err != nil {
 		if err == ErrUserNotFound {
 			response.SendAPIResponse(c, http.StatusNotFound, false, "user not found", nil)
 			return
@@ -140,22 +138,22 @@ func (h *UserHandler) deleteUser(c *gin.Context) {
 	response.SendAPIResponse(c, http.StatusOK, true, "user deleted", nil)
 }
 
-// @Summary      Get user by ID
+// @Summary      Get user by UUID
 // @Tags         users
 // @Produce      json
-// @Param        id path int true "User ID"
+// @Param        uuid path string true "User UUID"
 // @Success      200 {object} response.APIResponse{data=User}
 // @Failure      400 {object} response.APIResponse
 // @Failure      404 {object} response.APIResponse
-// @Router       /users/{id} [get]
-func (h *UserHandler) getUserByID(c *gin.Context) {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil || id <= 0 {
-		response.SendAPIResponse(c, http.StatusBadRequest, false, "invalid user id", nil)
+// @Router       /users/{uuid} [get]
+func (h *UserHandler) getUserByUUID(c *gin.Context) {
+	uid := c.Param("uuid")
+	if uid == "" {
+		response.SendAPIResponse(c, http.StatusBadRequest, false, "invalid user uuid", nil)
 		return
 	}
 
-	u, err := h.service.GetUserByID(c.Request.Context(), id)
+	u, err := h.service.GetUserByUUID(c.Request.Context(), uid)
 	if err != nil {
 		if err == ErrUserNotFound {
 			response.SendAPIResponse(c, http.StatusNotFound, false, "user not found", nil)
@@ -197,11 +195,11 @@ func (h *UserHandler) listUsers(c *gin.Context) {
 	response.SendAPIResponse(c, http.StatusOK, true, "users listed", data)
 }
 
-// @Summary      Login user (verify and update uuid)
+// @Summary      Login user (verify password)
 // @Tags         users
 // @Accept       json
 // @Produce      json
-// @Param        request body loginRequest true "Login request with firebase uuid"
+// @Param        request body loginRequest true "Login request"
 // @Success      200 {object} response.APIResponse{data=User}
 // @Failure      400 {object} response.APIResponse
 // @Failure      401 {object} response.APIResponse
@@ -213,7 +211,7 @@ func (h *UserHandler) login(c *gin.Context) {
 		response.SendAPIResponse(c, http.StatusBadRequest, false, "invalid request payload", nil)
 		return
 	}
-	u, err := h.service.Login(c.Request.Context(), req.Email, req.Password, req.UUID)
+	u, err := h.service.Login(c.Request.Context(), req.Email, req.Password)
 	if err != nil {
 		if err.Error() == "invalid credentials" {
 			response.SendAPIResponse(c, http.StatusUnauthorized, false, err.Error(), nil)
