@@ -81,6 +81,23 @@ definitions:
     - asset_type
     - title
     type: object
+  otp.getOTPRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  otp.verifyOTPRequest:
+    properties:
+      code:
+        type: string
+      email:
+        type: string
+    required:
+    - code
+    - email
+    type: object
   response.APIResponse:
     properties:
       created_at:
@@ -497,6 +514,36 @@ paths:
       summary: Unlist an asset
       tags:
       - buy
+  /getOTP:
+    post:
+      consumes:
+      - application/json
+      description: Generate a one-time password and send it to the provided email
+      parameters:
+      - description: Email to send OTP to
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/otp.getOTPRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Generate and send OTP
+      tags:
+      - OTP
   /startups:
     get:
       description: Retrieves a paginated list of all startups
@@ -984,6 +1031,36 @@ paths:
       summary: Login user (verify and update uuid)
       tags:
       - users
+  /verifyOTP:
+    post:
+      consumes:
+      - application/json
+      description: Verify the one-time password for the provided email
+      parameters:
+      - description: Email and OTP code to verify
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/otp.verifyOTPRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Verify OTP
+      tags:
+      - OTP
 schemes:
 - http
 - https

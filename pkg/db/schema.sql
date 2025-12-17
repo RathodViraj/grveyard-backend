@@ -120,3 +120,18 @@ CREATE TABLE IF NOT EXISTS transactions (
         FOREIGN KEY (buyer_id)
         REFERENCES users(id)
 );
+
+-- =========================
+-- OTP TABLE
+-- =========================
+CREATE TABLE IF NOT EXISTS otps (
+    id SERIAL PRIMARY KEY,
+    email TEXT NOT NULL,
+    code TEXT NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    verified BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_otps_email ON otps(email);
+CREATE INDEX IF NOT EXISTS idx_otps_expires_at ON otps(expires_at);

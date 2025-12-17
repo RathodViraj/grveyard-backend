@@ -16,6 +16,7 @@ import (
 	"grveyard/pkg/assets"
 	"grveyard/pkg/buy"
 	"grveyard/pkg/db"
+	"grveyard/pkg/otp"
 	"grveyard/pkg/startups"
 	"grveyard/pkg/users"
 )
@@ -54,6 +55,10 @@ func main() {
 	usersRepo := users.NewPostgresUserRepository(pool)
 	usersService := users.NewUserService(usersRepo)
 	usersHandler := users.NewUserHandler(usersService)
+
+	otpRepo := otp.NewPostgresOTPRepository(pool)
+	otpService := otp.NewOTPService(otpRepo)
+	otpHandler := otp.NewOTPHandler(otpService)
 
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery())
@@ -95,6 +100,7 @@ func main() {
 	assetsHandler.RegisterRoutes(router)
 	buyHandler.RegisterRoutes(router)
 	usersHandler.RegisterRoutes(router)
+	otpHandler.RegisterRoutes(router)
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
