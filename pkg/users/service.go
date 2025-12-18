@@ -3,6 +3,7 @@ package users
 import (
 	"context"
 	"errors"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -15,8 +16,10 @@ type UserService interface {
 	DeleteUserByUUID(ctx context.Context, uuid string) error
 	GetUserByID(ctx context.Context, id int64) (User, error)
 	GetUserByUUID(ctx context.Context, uuid string) (User, error)
+	GetUserByEmail(ctx context.Context, email string) (User, error)
 	ListUsers(ctx context.Context, page, limit int) ([]User, int64, error)
 	Login(ctx context.Context, email, password string) (User, error)
+	VerifyEmail(ctx context.Context, email string) (User, bool, error)
 }
 
 type userService struct {
@@ -72,6 +75,10 @@ func (s *userService) GetUserByUUID(ctx context.Context, uuid string) (User, err
 	return s.repo.GetUserByUUID(ctx, uuid)
 }
 
+func (s *userService) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	return s.repo.GetUserByEmail(ctx, email)
+}
+
 func (s *userService) ListUsers(ctx context.Context, page, limit int) ([]User, int64, error) {
 	if page < 1 {
 		page = 1
@@ -96,4 +103,26 @@ func (s *userService) Login(ctx context.Context, email, password string) (User, 
 	}
 	// Return user as-is, UUID remains unchanged
 	return s.repo.GetUserByID(ctx, id)
+}
+
+func (s *userService) VerifyEmail(ctx context.Context, email string) (User, bool, error) {
+	u, err := s.repo.GetUserByEmail(ctx, email)
+	if err != nil {
+		return User{}, false, err
+	}
+
+	now := time.Now()
+	within := false
+	if u.VerifiedAt != nil {
+		if now.Sub(*u.VerifiedAt) <= 30*24*time.Hour {
+			within = true
+		}
+	}
+
+	if err := s.repo.UpdateVerifiedAtByEmail(ctx, email, now); err != nil {
+		return User{}, false, err
+	}
+	u.VerifiedAt = &now
+
+	return u, within, nil
 }

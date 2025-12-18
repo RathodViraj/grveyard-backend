@@ -3,13 +3,14 @@ package users
 import "time"
 
 type User struct {
-	ID            int64     `json:"id"`
-	Name          string    `json:"name"`
-	Email         string    `json:"email"`
-	Role          string    `json:"role"`
-	ProfilePicURL string    `json:"profile_pic_url"`
-	UUID          string    `json:"uuid"`
-	CreatedAt     time.Time `json:"created_at"`
+	ID            int64      `json:"id"`
+	Name          string     `json:"name"`
+	Email         string     `json:"email"`
+	Role          string     `json:"role"`
+	ProfilePicURL string     `json:"profile_pic_url"`
+	UUID          string     `json:"uuid"`
+	VerifiedAt    *time.Time `json:"verified_at,omitempty"`
+	CreatedAt     time.Time  `json:"created_at"`
 }
 
 type UserList struct {

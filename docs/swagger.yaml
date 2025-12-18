@@ -183,6 +183,8 @@ definitions:
         type: string
       uuid:
         type: string
+      verified_at:
+        type: string
     type: object
   users.UserList:
     properties:
@@ -239,6 +241,13 @@ definitions:
         type: string
     required:
     - name
+    type: object
+  users.verifyEmailRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
     type: object
 host: grveyard-backend.onrender.com
 info:
@@ -1026,6 +1035,44 @@ paths:
           schema:
             $ref: '#/definitions/response.APIResponse'
       summary: Login user (verify password)
+      tags:
+      - users
+  /users/verify:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Verification check request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/users.verifyEmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/users.User'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Verify user by email (30-day window)
       tags:
       - users
   /verifyOTP:

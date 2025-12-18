@@ -17,6 +17,7 @@ import (
 	"grveyard/pkg/buy"
 	"grveyard/pkg/db"
 	"grveyard/pkg/otp"
+	"grveyard/pkg/sendemail"
 	"grveyard/pkg/startups"
 	"grveyard/pkg/users"
 )
@@ -37,8 +38,10 @@ func main() {
 		log.Println("No .env file found, using environment variables")
 	}
 
-	pool := db.Connect()
+	pool := db.ConnectToLocal()
 	defer pool.Close()
+
+	emailService := sendemail.NewEmailService()
 
 	startupsRepo := startups.NewPostgresStartupRepository(pool)
 	startupsService := startups.NewStartupService(startupsRepo)
@@ -57,7 +60,7 @@ func main() {
 	usersHandler := users.NewUserHandler(usersService)
 
 	otpRepo := otp.NewPostgresOTPRepository(pool)
-	otpService := otp.NewOTPService(otpRepo)
+	otpService := otp.NewOTPService(otpRepo, emailService)
 	otpHandler := otp.NewOTPHandler(otpService)
 
 	router := gin.New()
@@ -69,7 +72,6 @@ func main() {
 	if allowedOrigins == "" {
 		origins = []string{"*"}
 	} else {
-		// comma-separated list
 		parts := strings.Split(allowedOrigins, ",")
 		origins = make([]string, 0, len(parts))
 		for _, p := range parts {

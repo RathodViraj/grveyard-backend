@@ -20,6 +20,7 @@ func NewUserHandler(service UserService) *UserHandler {
 func (h *UserHandler) RegisterRoutes(router *gin.Engine) {
 	router.POST("/users", h.createUser)
 	router.POST("/users/login", h.login)
+	router.POST("/users/verify", h.verifyUser)
 	router.PUT("/users/:uuid", h.updateUser)
 	router.DELETE("/users/:uuid", h.deleteUser)
 	router.GET("/users", h.listUsers)
@@ -45,6 +46,10 @@ type updateUserRequest struct {
 type loginRequest struct {
 	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
+}
+
+type verifyEmailRequest struct {
+	Email string `json:"email" binding:"required"`
 }
 
 // @Summary      Create user
@@ -136,6 +141,41 @@ func (h *UserHandler) deleteUser(c *gin.Context) {
 		return
 	}
 	response.SendAPIResponse(c, http.StatusOK, true, "user deleted", nil)
+}
+
+// @Summary      Verify user by email (30-day window)
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        request body verifyEmailRequest true "Verification check request"
+// @Success      200 {object} response.APIResponse{data=User}
+// @Failure      401 {object} response.APIResponse
+// @Failure      400 {object} response.APIResponse
+// @Failure      404 {object} response.APIResponse
+// @Router       /users/verify [post]
+func (h *UserHandler) verifyUser(c *gin.Context) {
+	var req verifyEmailRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.SendAPIResponse(c, http.StatusBadRequest, false, "invalid request payload", nil)
+		return
+	}
+
+	u, within, err := h.service.VerifyEmail(c.Request.Context(), req.Email)
+	if err != nil {
+		if err == ErrUserNotFound {
+			response.SendAPIResponse(c, http.StatusUnauthorized, false, "user not verified", nil)
+			return
+		}
+		response.SendAPIResponse(c, http.StatusBadRequest, false, err.Error(), nil)
+		return
+	}
+
+	if !within {
+		response.SendAPIResponse(c, http.StatusUnauthorized, false, "user not verified", nil)
+		return
+	}
+
+	response.SendAPIResponse(c, http.StatusOK, true, "user verified", u)
 }
 
 // @Summary      Get user by UUID
