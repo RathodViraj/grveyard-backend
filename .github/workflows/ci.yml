@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DATABASE_URL: postgres://test:test@localhost:5432/testdb?sslmode=disable
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+
+      - name: Install psql
+        run: sudo apt-get install -y postgresql-client
+
+      - name: Wait for Postgres
+        run: |
+          until pg_isready -h localhost -p 5432 -U test; do
+            echo "Waiting for postgres..."
+            sleep 2
+          done
+
+      - name: Run DB schema
+        run: |
+          psql "$DATABASE_URL" -f db/schema.sql
+
+      - name: Run tests
+        run: go test ./... -race

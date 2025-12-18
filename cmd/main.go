@@ -15,10 +15,10 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
+	"grveyard/db"
 	_ "grveyard/docs"
 	"grveyard/pkg/assets"
 	"grveyard/pkg/buy"
-	"grveyard/pkg/db"
 	"grveyard/pkg/otp"
 	"grveyard/pkg/sendemail"
 	"grveyard/pkg/startups"
