@@ -999,6 +999,27 @@ paths:
       summary: Update user (by UUID)
       tags:
       - users
+  /users/checkVerification:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Verification check request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/users.verifyEmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: boolean
+      summary: Check verification (boolean only)
+      tags:
+      - users
   /users/login:
     post:
       consumes:

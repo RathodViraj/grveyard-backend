@@ -22,6 +22,8 @@ type UserRepository interface {
 	GetUserByID(ctx context.Context, id int64) (User, error)
 	GetUserByUUID(ctx context.Context, uuid string) (User, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
+	GetUserByEmailIncludingDeleted(ctx context.Context, email string) (User, error)
+	ReviveUserByEmail(ctx context.Context, email, name, role, passwordHash, profilePicURL, uuid string) (User, error)
 	ListUsers(ctx context.Context, limit, offset int) ([]User, int64, error)
 	// Auth helpers
 	GetUserAuthByEmail(ctx context.Context, email string) (int64, string, error)
@@ -84,7 +86,7 @@ func (r *postgresUserRepository) UpdateUserByUUID(ctx context.Context, currentUU
 }
 
 func (r *postgresUserRepository) DeleteUser(ctx context.Context, id int64) error {
-	cmd, err := r.pool.Exec(ctx, "UPDATE users SET is_deleted = true WHERE id = $1 AND is_deleted = false", id)
+	cmd, err := r.pool.Exec(ctx, "UPDATE users SET email = NULL, is_deleted = true WHERE id = $1 AND is_deleted = false", id)
 	if err != nil {
 		return err
 	}
@@ -95,7 +97,7 @@ func (r *postgresUserRepository) DeleteUser(ctx context.Context, id int64) error
 }
 
 func (r *postgresUserRepository) DeleteUserByUUID(ctx context.Context, uuid string) error {
-	cmd, err := r.pool.Exec(ctx, "UPDATE users SET is_deleted = true WHERE uuid = $1 AND is_deleted = false", uuid)
+	cmd, err := r.pool.Exec(ctx, "UPDATE users SET email = NULL, is_deleted = true WHERE uuid = $1 AND is_deleted = false", uuid)
 	if err != nil {
 		return err
 	}
@@ -103,6 +105,43 @@ func (r *postgresUserRepository) DeleteUserByUUID(ctx context.Context, uuid stri
 		return ErrUserNotFound
 	}
 	return nil
+}
+
+func (r *postgresUserRepository) GetUserByEmailIncludingDeleted(ctx context.Context, email string) (User, error) {
+	query := `SELECT id, name, email, role, profile_pic_url, uuid, verified_at, created_at, is_deleted
+			  FROM users
+			  WHERE email = $1`
+	row := r.pool.QueryRow(ctx, query, email)
+
+	var u User
+	var isDeleted bool
+	if err := row.Scan(&u.ID, &u.Name, &u.Email, &u.Role, &u.ProfilePicURL, &u.UUID, &u.VerifiedAt, &u.CreatedAt, &isDeleted); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return User{}, ErrUserNotFound
+		}
+		return User{}, err
+	}
+	if isDeleted {
+		// keep info; caller can decide to revive
+	}
+	return u, nil
+}
+
+func (r *postgresUserRepository) ReviveUserByEmail(ctx context.Context, email, name, role, passwordHash, profilePicURL, uuid string) (User, error) {
+	query := `UPDATE users
+			  SET name = $1, role = $2, password_hash = $3, profile_pic_url = $4, uuid = $5, is_deleted = false
+			  WHERE email = $6
+			  RETURNING id, name, email, role, profile_pic_url, uuid, verified_at, created_at`
+	row := r.pool.QueryRow(ctx, query, name, role, passwordHash, profilePicURL, uuid, email)
+
+	var u User
+	if err := row.Scan(&u.ID, &u.Name, &u.Email, &u.Role, &u.ProfilePicURL, &u.UUID, &u.VerifiedAt, &u.CreatedAt); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return User{}, ErrUserNotFound
+		}
+		return User{}, err
+	}
+	return u, nil
 }
 
 func (r *postgresUserRepository) GetUserByID(ctx context.Context, id int64) (User, error) {

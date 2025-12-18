@@ -20,7 +20,8 @@ func NewUserHandler(service UserService) *UserHandler {
 func (h *UserHandler) RegisterRoutes(router *gin.Engine) {
 	router.POST("/users", h.createUser)
 	router.POST("/users/login", h.login)
-	router.POST("/users/verify", h.verifyUser)
+	router.POST("/users/verify", h.verifyUser) // legacy
+	router.POST("/users/checkVerification", h.checkVerification)
 	router.PUT("/users/:uuid", h.updateUser)
 	router.DELETE("/users/:uuid", h.deleteUser)
 	router.GET("/users", h.listUsers)
@@ -176,6 +177,28 @@ func (h *UserHandler) verifyUser(c *gin.Context) {
 	}
 
 	response.SendAPIResponse(c, http.StatusOK, true, "user verified", u)
+}
+
+// checkVerification returns a strict boolean without APIResponse wrapper.
+// @Summary      Check verification (boolean only)
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        request body verifyEmailRequest true "Verification check request"
+// @Success      200 {boolean} boolean
+// @Router       /users/checkVerification [post]
+func (h *UserHandler) checkVerification(c *gin.Context) {
+	var req verifyEmailRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusOK, false)
+		return
+	}
+	_, within, err := h.service.VerifyEmail(c.Request.Context(), req.Email)
+	if err != nil {
+		c.JSON(http.StatusOK, false)
+		return
+	}
+	c.JSON(http.StatusOK, within)
 }
 
 // @Summary      Get user by UUID

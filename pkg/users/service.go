@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/jackc/pgconn"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -38,7 +39,14 @@ func (s *userService) CreateUser(ctx context.Context, name, email, role, passwor
 	if err != nil {
 		return User{}, err
 	}
-	return s.repo.CreateUser(ctx, name, email, role, string(hashBytes), profilePicURL, uuid)
+	u, err := s.repo.CreateUser(ctx, name, email, role, string(hashBytes), profilePicURL, uuid)
+	if err != nil {
+		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == "23505" {
+			return User{}, errors.New("user exists with that email")
+		}
+		return User{}, err
+	}
+	return u, nil
 }
 
 func (s *userService) UpdateUser(ctx context.Context, u User) (User, error) {
@@ -52,7 +60,7 @@ func (s *userService) UpdateUserByUUID(ctx context.Context, currentUUID string, 
 	if u.Role != "" && u.Role != "buyer" && u.Role != "founder" {
 		return User{}, errors.New("invalid role")
 	}
-	// Ensure uuid is set; if empty, keep current
+
 	if u.UUID == "" {
 		u.UUID = currentUUID
 	}
@@ -101,7 +109,7 @@ func (s *userService) Login(ctx context.Context, email, password string) (User, 
 	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)); err != nil {
 		return User{}, errors.New("invalid credentials")
 	}
-	// Return user as-is, UUID remains unchanged
+
 	return s.repo.GetUserByID(ctx, id)
 }
 
