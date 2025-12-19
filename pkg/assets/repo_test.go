@@ -70,7 +70,7 @@ func TestPostgresAssetRepository_CreateAsset(t *testing.T) {
 
 func TestPostgresAssetRepository_UpdateAsset(t *testing.T) {
 	pool := setupAssetTestPool(t)
-	cleanAssetTables(t, pool)
+	// cleanAssetTables(t, pool)
 
 	repo := NewPostgresAssetRepository(pool)
 	ctx := context.Background()
@@ -100,7 +100,7 @@ func TestPostgresAssetRepository_UpdateAsset(t *testing.T) {
 
 func TestPostgresAssetRepository_DeleteAsset(t *testing.T) {
 	pool := setupAssetTestPool(t)
-	cleanAssetTables(t, pool)
+	// cleanAssetTables(t, pool)
 
 	repo := NewPostgresAssetRepository(pool)
 	ctx := context.Background()
@@ -118,7 +118,7 @@ func TestPostgresAssetRepository_DeleteAsset(t *testing.T) {
 
 func TestPostgresAssetRepository_ListAssets_WithFilters(t *testing.T) {
 	pool := setupAssetTestPool(t)
-	cleanAssetTables(t, pool)
+	// cleanAssetTables(t, pool)
 
 	repo := NewPostgresAssetRepository(pool)
 	ctx := context.Background()
@@ -146,7 +146,7 @@ func TestPostgresAssetRepository_ListAssets_WithFilters(t *testing.T) {
 
 func TestPostgresAssetRepository_ListAssets_Pagination(t *testing.T) {
 	pool := setupAssetTestPool(t)
-	cleanAssetTables(t, pool)
+	// cleanAssetTables(t, pool)
 
 	repo := NewPostgresAssetRepository(pool)
 	ctx := context.Background()
@@ -169,7 +169,7 @@ func TestPostgresAssetRepository_ListAssets_Pagination(t *testing.T) {
 
 func TestPostgresAssetRepository_CreateAsset_InvalidStartup(t *testing.T) {
 	pool := setupAssetTestPool(t)
-	cleanAssetTables(t, pool)
+	// cleanAssetTables(t, pool)
 
 	repo := NewPostgresAssetRepository(pool)
 	ctx := context.Background()

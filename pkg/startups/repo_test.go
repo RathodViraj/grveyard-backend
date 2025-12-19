@@ -55,7 +55,7 @@ func insertTestUser(t *testing.T, pool *pgxpool.Pool, name string) int64 {
 
 func TestPostgresStartupRepository_CreateStartup(t *testing.T) {
 	pool := setupTestPool(t)
-	cleanDatabase(t, pool)
+	// cleanDatabase(t, pool)
 
 	repo := NewPostgresStartupRepository(pool)
 	ctx := context.Background()
@@ -76,7 +76,7 @@ func TestPostgresStartupRepository_CreateStartup(t *testing.T) {
 
 func TestPostgresStartupRepository_UpdateStartup(t *testing.T) {
 	pool := setupTestPool(t)
-	cleanDatabase(t, pool)
+	// cleanDatabase(t, pool)
 
 	repo := NewPostgresStartupRepository(pool)
 	ctx := context.Background()
@@ -110,7 +110,7 @@ func TestPostgresStartupRepository_UpdateStartup(t *testing.T) {
 
 func TestPostgresStartupRepository_DeleteStartup(t *testing.T) {
 	pool := setupTestPool(t)
-	cleanDatabase(t, pool)
+	// cleanDatabase(t, pool)
 
 	repo := NewPostgresStartupRepository(pool)
 	ctx := context.Background()
@@ -133,7 +133,7 @@ func TestPostgresStartupRepository_DeleteStartup(t *testing.T) {
 
 func TestPostgresStartupRepository_ListStartups(t *testing.T) {
 	pool := setupTestPool(t)
-	cleanDatabase(t, pool)
+	// cleanDatabase(t, pool)
 
 	repo := NewPostgresStartupRepository(pool)
 	ctx := context.Background()
@@ -161,7 +161,7 @@ func TestPostgresStartupRepository_ListStartups(t *testing.T) {
 
 func TestPostgresStartupRepository_CreateStartup_InvalidOwner(t *testing.T) {
 	pool := setupTestPool(t)
-	cleanDatabase(t, pool)
+	// cleanDatabase(t, pool)
 
 	repo := NewPostgresStartupRepository(pool)
 	ctx := context.Background()

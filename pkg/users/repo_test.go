@@ -52,7 +52,7 @@ func insertUser(t *testing.T, pool *pgxpool.Pool, name string) User {
 
 func TestPostgresUserRepository_CreateUser(t *testing.T) {
 	pool := setupUserTestPool(t)
-	cleanUserTables(t, pool)
+	//cleanUserTables(t, pool)
 
 	repo := NewPostgresUserRepository(pool)
 	ctx := context.Background()
@@ -70,7 +70,7 @@ func TestPostgresUserRepository_CreateUser(t *testing.T) {
 
 func TestPostgresUserRepository_UpdateUser(t *testing.T) {
 	pool := setupUserTestPool(t)
-	cleanUserTables(t, pool)
+	// cleanUserTables(t, pool)
 
 	repo := NewPostgresUserRepository(pool)
 	ctx := context.Background()
@@ -94,7 +94,7 @@ func TestPostgresUserRepository_UpdateUser(t *testing.T) {
 
 func TestPostgresUserRepository_DeleteUser(t *testing.T) {
 	pool := setupUserTestPool(t)
-	cleanUserTables(t, pool)
+	// cleanUserTables(t, pool)
 
 	repo := NewPostgresUserRepository(pool)
 	ctx := context.Background()
@@ -127,7 +127,7 @@ func TestPostgresUserRepository_ListUsers(t *testing.T) {
 
 func TestPostgresUserRepository_UpdateUser_NotFound(t *testing.T) {
 	pool := setupUserTestPool(t)
-	cleanUserTables(t, pool)
+	// cleanUserTables(t, pool)
 
 	repo := NewPostgresUserRepository(pool)
 	ctx := context.Background()

@@ -40,7 +40,7 @@ func cleanBuyTables(t *testing.T, pool *pgxpool.Pool) {
 
 func TestPostgresBuyRepository_MarkAssetSold(t *testing.T) {
 	pool := setupBuyTestPool(t)
-	cleanBuyTables(t, pool)
+	// cleanBuyTables(t, pool)
 
 	repo := NewPostgresBuyRepository(pool)
 	ctx := context.Background()
@@ -58,7 +58,7 @@ func TestPostgresBuyRepository_MarkAssetSold(t *testing.T) {
 
 func TestPostgresBuyRepository_UnlistAsset(t *testing.T) {
 	pool := setupBuyTestPool(t)
-	cleanBuyTables(t, pool)
+	// cleanBuyTables(t, pool)
 
 	repo := NewPostgresBuyRepository(pool)
 	ctx := context.Background()
@@ -75,7 +75,7 @@ func TestPostgresBuyRepository_UnlistAsset(t *testing.T) {
 
 func TestPostgresBuyRepository_MarkStartupSold(t *testing.T) {
 	pool := setupBuyTestPool(t)
-	cleanBuyTables(t, pool)
+	// cleanBuyTables(t, pool)
 
 	repo := NewPostgresBuyRepository(pool)
 	ctx := context.Background()
@@ -91,7 +91,7 @@ func TestPostgresBuyRepository_MarkStartupSold(t *testing.T) {
 
 func TestPostgresBuyRepository_UnlistStartup(t *testing.T) {
 	pool := setupBuyTestPool(t)
-	cleanBuyTables(t, pool)
+	// cleanBuyTables(t, pool)
 
 	repo := NewPostgresBuyRepository(pool)
 	ctx := context.Background()
@@ -107,7 +107,7 @@ func TestPostgresBuyRepository_UnlistStartup(t *testing.T) {
 
 func TestPostgresBuyRepository_GetAssetStatus_NotFound(t *testing.T) {
 	pool := setupBuyTestPool(t)
-	cleanBuyTables(t, pool)
+	// cleanBuyTables(t, pool)
 
 	repo := NewPostgresBuyRepository(pool)
 	ctx := context.Background()
@@ -119,7 +119,7 @@ func TestPostgresBuyRepository_GetAssetStatus_NotFound(t *testing.T) {
 
 func TestPostgresBuyRepository_GetStartupStatus_NotFound(t *testing.T) {
 	pool := setupBuyTestPool(t)
-	cleanBuyTables(t, pool)
+	// cleanBuyTables(t, pool)
 
 	repo := NewPostgresBuyRepository(pool)
 	ctx := context.Background()
