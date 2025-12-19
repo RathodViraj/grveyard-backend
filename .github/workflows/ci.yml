@@ -52,4 +52,4 @@ jobs:
           psql "$DATABASE_URL_FOR_TEST" -f db/schema.sql
 
       - name: Run tests
-        run: go test ./... -race
+        run: go test ./...

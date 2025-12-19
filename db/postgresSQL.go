@@ -79,12 +79,10 @@ func getEnvAsDuration(key, defaultValue string) time.Duration {
 	return duration
 }
 
-// ApplySchema reads the SQL schema file and executes it against the provided pool.
-// Default schema path: pkg/db/schema.sql. Override with SCHEMA_PATH.
 func ApplySchema(ctx context.Context, pool *pgxpool.Pool) error {
 	schemaPath := os.Getenv("SCHEMA_PATH")
 	if schemaPath == "" {
-		schemaPath = "pkg/db/schema.sql"
+		schemaPath = "db/schema.sql"
 	}
 
 	bytes, err := os.ReadFile(schemaPath)
