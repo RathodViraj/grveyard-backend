@@ -14,9 +14,9 @@ import (
 func setupBuyTestPool(t *testing.T) *pgxpool.Pool {
 	t.Helper()
 
-	dsn := os.Getenv("DATABASE_URL")
+	dsn := os.Getenv("DATABASE_URL_FOR_TEST")
 	if dsn == "" {
-		t.Skip("DATABASE_URL not set; skipping buy repository tests")
+		t.Skip("DATABASE_URL_FOR_TEST not set; skipping buy repository tests")
 	}
 
 	ctx := context.Background()

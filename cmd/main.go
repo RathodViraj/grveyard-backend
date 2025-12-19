@@ -41,7 +41,7 @@ func main() {
 		log.Println("No .env file found, using environment variables")
 	}
 
-	pool := db.Connect()
+	pool := db.ConnectToLocal()
 	defer pool.Close()
 
 	emailService := sendemail.NewEmailService()
