@@ -177,8 +177,8 @@ func TestPostgresAssetRepository_CreateAsset_InvalidStartup(t *testing.T) {
 	_, err := repo.CreateAsset(ctx, Asset{StartupID: 9999, Title: "Bad", AssetType: "research"})
 
 	require.Error(t, err)
-	pgErr, ok := err.(*pgconn.PgError)
-	require.True(t, ok)
+	var pgErr *pgconn.PgError
+	require.ErrorAs(t, err, &pgErr)
 	require.Equal(t, "23503", pgErr.Code)
 }
 
