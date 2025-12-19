@@ -2,13 +2,13 @@ package buy
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"
+
+	"grveyard/pkg/testhelpers"
 )
 
 func setupBuyTestPool(t *testing.T) *pgxpool.Pool {
@@ -38,41 +38,19 @@ func cleanBuyTables(t *testing.T, pool *pgxpool.Pool) {
 	require.NoError(t, err)
 }
 
-func insertStartupForBuy(t *testing.T, pool *pgxpool.Pool, name string) int64 {
-	t.Helper()
-	ctx := context.Background()
-	email := fmt.Sprintf("%s-%d@example.com", name, time.Now().UnixNano())
-	var userID int64
-	err := pool.QueryRow(ctx, "INSERT INTO users (name, email, role, password_hash) VALUES ($1,$2,'founder',$3) RETURNING id", name, email, "hash").Scan(&userID)
-	require.NoError(t, err)
-
-	var startupID int64
-	err = pool.QueryRow(ctx, "INSERT INTO startups (name, owner_id, status) VALUES ($1,$2,'active') RETURNING id", name+"-startup", userID).Scan(&startupID)
-	require.NoError(t, err)
-	return startupID
-}
-
-func insertAssetForBuy(t *testing.T, pool *pgxpool.Pool, startupID int64, title string) int64 {
-	t.Helper()
-	ctx := context.Background()
-	var assetID int64
-	err := pool.QueryRow(ctx, "INSERT INTO assets (startup_id, title, asset_type, is_active, is_sold, created_at) VALUES ($1,$2,'research',true,false,NOW()) RETURNING id", startupID, title).Scan(&assetID)
-	require.NoError(t, err)
-	return assetID
-}
-
 func TestPostgresBuyRepository_MarkAssetSold(t *testing.T) {
 	pool := setupBuyTestPool(t)
 	cleanBuyTables(t, pool)
 
 	repo := NewPostgresBuyRepository(pool)
 	ctx := context.Background()
-	sid := insertStartupForBuy(t, pool, "Alice")
-	aid := insertAssetForBuy(t, pool, sid, "Asset")
+	ownerID := testhelpers.CreateTestUser(t, pool)
+	sid := testhelpers.CreateTestStartup(t, pool, ownerID)
+	aid := testhelpers.CreateTestAsset(t, pool, sid)
 
-	require.NoError(t, repo.MarkAssetSold(ctx, aid))
+	require.NoError(t, repo.MarkAssetSold(ctx, int64(aid)))
 
-	sold, active, err := repo.GetAssetStatus(ctx, aid)
+	sold, active, err := repo.GetAssetStatus(ctx, int64(aid))
 	require.NoError(t, err)
 	require.True(t, sold)
 	require.True(t, active)
@@ -84,12 +62,13 @@ func TestPostgresBuyRepository_UnlistAsset(t *testing.T) {
 
 	repo := NewPostgresBuyRepository(pool)
 	ctx := context.Background()
-	sid := insertStartupForBuy(t, pool, "Bob")
-	aid := insertAssetForBuy(t, pool, sid, "Asset")
+	ownerID := testhelpers.CreateTestUser(t, pool)
+	sid := testhelpers.CreateTestStartup(t, pool, ownerID)
+	aid := testhelpers.CreateTestAsset(t, pool, sid)
 
-	require.NoError(t, repo.UnlistAsset(ctx, aid))
+	require.NoError(t, repo.UnlistAsset(ctx, int64(aid)))
 
-	_, active, err := repo.GetAssetStatus(ctx, aid)
+	_, active, err := repo.GetAssetStatus(ctx, int64(aid))
 	require.NoError(t, err)
 	require.False(t, active)
 }
@@ -100,11 +79,12 @@ func TestPostgresBuyRepository_MarkStartupSold(t *testing.T) {
 
 	repo := NewPostgresBuyRepository(pool)
 	ctx := context.Background()
-	sid := insertStartupForBuy(t, pool, "Carol")
+	ownerID := testhelpers.CreateTestUser(t, pool)
+	sid := testhelpers.CreateTestStartup(t, pool, ownerID)
 
-	require.NoError(t, repo.MarkStartupSold(ctx, sid))
+	require.NoError(t, repo.MarkStartupSold(ctx, int64(sid)))
 
-	status, err := repo.GetStartupStatus(ctx, sid)
+	status, err := repo.GetStartupStatus(ctx, int64(sid))
 	require.NoError(t, err)
 	require.Equal(t, "sold", status)
 }
@@ -115,11 +95,12 @@ func TestPostgresBuyRepository_UnlistStartup(t *testing.T) {
 
 	repo := NewPostgresBuyRepository(pool)
 	ctx := context.Background()
-	sid := insertStartupForBuy(t, pool, "Dave")
+	ownerID := testhelpers.CreateTestUser(t, pool)
+	sid := testhelpers.CreateTestStartup(t, pool, ownerID)
 
-	require.NoError(t, repo.UnlistStartup(ctx, sid))
+	require.NoError(t, repo.UnlistStartup(ctx, int64(sid)))
 
-	status, err := repo.GetStartupStatus(ctx, sid)
+	status, err := repo.GetStartupStatus(ctx, int64(sid))
 	require.NoError(t, err)
 	require.Equal(t, "failed", status)
 }

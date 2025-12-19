@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"
+
+	"grveyard/pkg/testhelpers"
 )
 
 func setupAssetTestPool(t *testing.T) *pgxpool.Pool {
@@ -39,27 +40,14 @@ func cleanAssetTables(t *testing.T, pool *pgxpool.Pool) {
 	require.NoError(t, err)
 }
 
-func insertStartup(t *testing.T, pool *pgxpool.Pool, name string) int64 {
-	t.Helper()
-	ctx := context.Background()
-	email := fmt.Sprintf("%s-%d@example.com", name, time.Now().UnixNano())
-	var userID int64
-	err := pool.QueryRow(ctx, "INSERT INTO users (name, email, role, password_hash) VALUES ($1,$2,'founder',$3) RETURNING id", name, email, "hash").Scan(&userID)
-	require.NoError(t, err)
-
-	var startupID int64
-	err = pool.QueryRow(ctx, "INSERT INTO startups (name, owner_id, status) VALUES ($1,$2,'active') RETURNING id", name+"-startup", userID).Scan(&startupID)
-	require.NoError(t, err)
-	return startupID
-}
-
 func TestPostgresAssetRepository_CreateAsset(t *testing.T) {
 	pool := setupAssetTestPool(t)
 	cleanAssetTables(t, pool)
 
 	repo := NewPostgresAssetRepository(pool)
 	ctx := context.Background()
-	sid := insertStartup(t, pool, "Alice")
+	ownerID := testhelpers.CreateTestUser(t, pool)
+	sid := int64(testhelpers.CreateTestStartup(t, pool, ownerID))
 
 	created, err := repo.CreateAsset(ctx, Asset{
 		StartupID:    sid,
@@ -86,7 +74,8 @@ func TestPostgresAssetRepository_UpdateAsset(t *testing.T) {
 
 	repo := NewPostgresAssetRepository(pool)
 	ctx := context.Background()
-	sid := insertStartup(t, pool, "Bob")
+	ownerID := testhelpers.CreateTestUser(t, pool)
+	sid := int64(testhelpers.CreateTestStartup(t, pool, ownerID))
 
 	created, err := repo.CreateAsset(ctx, Asset{StartupID: sid, Title: "Old", AssetType: "data", IsNegotiable: true})
 	require.NoError(t, err)
@@ -115,7 +104,8 @@ func TestPostgresAssetRepository_DeleteAsset(t *testing.T) {
 
 	repo := NewPostgresAssetRepository(pool)
 	ctx := context.Background()
-	sid := insertStartup(t, pool, "Carol")
+	ownerID := testhelpers.CreateTestUser(t, pool)
+	sid := int64(testhelpers.CreateTestStartup(t, pool, ownerID))
 
 	created, err := repo.CreateAsset(ctx, Asset{StartupID: sid, Title: "Delete", AssetType: "domain"})
 	require.NoError(t, err)
@@ -132,7 +122,8 @@ func TestPostgresAssetRepository_ListAssets_WithFilters(t *testing.T) {
 
 	repo := NewPostgresAssetRepository(pool)
 	ctx := context.Background()
-	sid := insertStartup(t, pool, "Dave")
+	ownerID := testhelpers.CreateTestUser(t, pool)
+	sid := int64(testhelpers.CreateTestStartup(t, pool, ownerID))
 
 	assetsToCreate := []Asset{
 		{StartupID: sid, Title: "One", AssetType: "research", IsSold: false, IsActive: true},
@@ -159,7 +150,8 @@ func TestPostgresAssetRepository_ListAssets_Pagination(t *testing.T) {
 
 	repo := NewPostgresAssetRepository(pool)
 	ctx := context.Background()
-	sid := insertStartup(t, pool, "Eve")
+	ownerID := testhelpers.CreateTestUser(t, pool)
+	sid := int64(testhelpers.CreateTestStartup(t, pool, ownerID))
 
 	for i := 0; i < 3; i++ {
 		_, err := repo.CreateAsset(ctx, Asset{StartupID: sid, Title: fmt.Sprintf("A%d", i+1), AssetType: "research", IsActive: true})
