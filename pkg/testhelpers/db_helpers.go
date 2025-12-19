@@ -5,15 +5,19 @@ import (
 	"fmt"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"
 )
 
-var uniqueCounter int64
+var (
+	uniqueCounter int64
+	baseSuffix    = time.Now().UnixNano()
+)
 
 func nextSuffix() int64 {
-	return atomic.AddInt64(&uniqueCounter, 1)
+	return baseSuffix + atomic.AddInt64(&uniqueCounter, 1)
 }
 
 // CreateTestUser inserts a minimal valid user row and returns its ID.

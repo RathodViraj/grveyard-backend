@@ -176,8 +176,7 @@ func TestPostgresStartupRepository_CreateStartup_InvalidOwner(t *testing.T) {
 	})
 
 	require.Error(t, err)
-
-	var pgErr *pgconn.PgError
-	require.ErrorAs(t, err, &pgErr)
+	pgErr, ok := err.(*pgconn.PgError)
+	require.True(t, ok)
 	require.Equal(t, "23503", pgErr.Code)
 }
