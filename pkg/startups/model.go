@@ -7,7 +7,7 @@ type Startup struct {
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	LogoURL     string    `json:"logo_url"`
-	OwnerID     int64     `json:"owner_id"`
+	OwnerUUID   string    `json:"owner_uuid"`
 	Status      string    `json:"status"`
 	CreatedAt   time.Time `json:"created_at"`
 }

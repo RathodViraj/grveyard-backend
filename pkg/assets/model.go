@@ -4,7 +4,7 @@ import "time"
 
 type Asset struct {
 	ID           int64     `json:"id"`
-	StartupID    int64     `json:"startup_id"`
+	UserUUID     string    `json:"user_uuid"`
 	Title        string    `json:"title"`
 	Description  string    `json:"description"`
 	AssetType    string    `json:"asset_type"`

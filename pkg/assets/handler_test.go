@@ -48,8 +48,8 @@ func (m *mockAssetService) ListAssets(ctx context.Context, filters AssetFilters,
 	return assets, args.Get(1).(int64), args.Error(2)
 }
 
-func (m *mockAssetService) ListAssetsByStartup(ctx context.Context, startupID int64, page, limit int) ([]Asset, int64, error) {
-	args := m.Called(ctx, startupID, page, limit)
+func (m *mockAssetService) ListAssetsByUser(ctx context.Context, userUUID string, page, limit int) ([]Asset, int64, error) {
+	args := m.Called(ctx, userUUID, page, limit)
 	assets, _ := args.Get(0).([]Asset)
 	return assets, args.Get(1).(int64), args.Error(2)
 }
@@ -66,12 +66,12 @@ func TestAssetHandler_CreateAsset_Success(t *testing.T) {
 	svc := new(mockAssetService)
 	r := setupAssetRouter(svc)
 
-	expected := Asset{ID: 1, StartupID: 1, Title: "Asset", AssetType: "research", IsNegotiable: true, IsActive: true}
+	expected := Asset{ID: 1, UserUUID: "uuid-1", Title: "Asset", AssetType: "research", IsNegotiable: true, IsActive: true}
 	svc.On("CreateAsset", mock.Anything, mock.MatchedBy(func(a Asset) bool {
-		return a.StartupID == 1 && a.Title == "Asset" && a.AssetType == "research"
+		return a.UserUUID == "uuid-1" && a.Title == "Asset" && a.AssetType == "research"
 	})).Return(expected, nil)
 
-	reqBody := `{"startup_id":1,"title":"Asset","description":"d","asset_type":"research","image_url":"img","price":10,"is_negotiable":true,"is_sold":false}`
+	reqBody := `{"user_uuid":"uuid-1","title":"Asset","description":"d","asset_type":"research","image_url":"img","price":10,"is_negotiable":true,"is_sold":false}`
 	req := httptest.NewRequest(http.MethodPost, "/assets", strings.NewReader(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
@@ -96,7 +96,7 @@ func TestAssetHandler_CreateAsset_InvalidType(t *testing.T) {
 	svc := new(mockAssetService)
 	r := setupAssetRouter(svc)
 
-	req := httptest.NewRequest(http.MethodPost, "/assets", strings.NewReader(`{"startup_id":1,"title":"Asset","asset_type":"weird"}`))
+	req := httptest.NewRequest(http.MethodPost, "/assets", strings.NewReader(`{"user_uuid":"uuid-1","title":"Asset","asset_type":"weird"}`))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -115,7 +115,7 @@ func TestAssetHandler_CreateAsset_NegativePrice(t *testing.T) {
 	svc := new(mockAssetService)
 	r := setupAssetRouter(svc)
 
-	req := httptest.NewRequest(http.MethodPost, "/assets", strings.NewReader(`{"startup_id":1,"title":"Asset","asset_type":"research","price":-1}`))
+	req := httptest.NewRequest(http.MethodPost, "/assets", strings.NewReader(`{"user_uuid":"uuid-1","title":"Asset","asset_type":"research","price":-1}`))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -179,11 +179,11 @@ func TestAssetHandler_UpdateAsset_NotFound(t *testing.T) {
 // 	require.Len(t, itemsRaw, 1)
 // }
 
-func TestAssetHandler_ListAssetsByStartup_InvalidID(t *testing.T) {
+func TestAssetHandler_ListAssetsByUser_InvalidUUID(t *testing.T) {
 	svc := new(mockAssetService)
 	r := setupAssetRouter(svc)
 
-	req := httptest.NewRequest(http.MethodGet, "/startups/abc/assets", nil)
+	req := httptest.NewRequest(http.MethodGet, "/users//assets", nil)
 	w := httptest.NewRecorder()
 
 	r.ServeHTTP(w, req)
@@ -192,7 +192,7 @@ func TestAssetHandler_ListAssetsByStartup_InvalidID(t *testing.T) {
 	var resp response.APIResponse
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
 	require.False(t, resp.Success)
-	require.Equal(t, "invalid startup id", resp.Message)
+	require.Equal(t, "invalid user uuid", resp.Message)
 
-	svc.AssertNotCalled(t, "ListAssetsByStartup", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	svc.AssertNotCalled(t, "ListAssetsByUser", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 }

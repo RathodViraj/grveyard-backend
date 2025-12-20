@@ -20,9 +20,9 @@ definitions:
         type: boolean
       price:
         type: number
-      startup_id:
-        type: integer
       title:
+        type: string
+      user_uuid:
         type: string
     type: object
   assets.AssetList:
@@ -52,14 +52,14 @@ definitions:
         type: boolean
       price:
         type: number
-      startup_id:
-        type: integer
       title:
+        type: string
+      user_uuid:
         type: string
     required:
     - asset_type
-    - startup_id
     - title
+    - user_uuid
     type: object
   assets.updateAssetRequest:
     properties:
@@ -120,8 +120,8 @@ definitions:
         type: string
       name:
         type: string
-      owner_id:
-        type: integer
+      owner_uuid:
+        type: string
       status:
         type: string
     type: object
@@ -146,13 +146,13 @@ definitions:
         type: string
       name:
         type: string
-      owner_id:
-        type: integer
+      owner_uuid:
+        type: string
       status:
         type: string
     required:
     - name
-    - owner_id
+    - owner_uuid
     type: object
   startups.updateStartupRequest:
     properties:
@@ -271,10 +271,10 @@ paths:
         in: query
         name: limit
         type: integer
-      - description: Filter by startup ID
+      - description: Filter by user UUID
         in: query
-        name: startup_id
-        type: integer
+        name: user_uuid
+        type: string
       - description: Filter by asset type
         enum:
         - research
@@ -726,48 +726,6 @@ paths:
       summary: Update a startup
       tags:
       - startups
-  /startups/{id}/assets:
-    get:
-      description: Retrieves a paginated list of active assets for a specific startup
-      parameters:
-      - description: Startup ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - default: 1
-        description: Page number
-        in: query
-        name: page
-        type: integer
-      - default: 10
-        description: Items per page
-        in: query
-        name: limit
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Startup assets retrieved successfully
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.APIResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/assets.AssetList'
-              type: object
-        "400":
-          description: Invalid startup ID
-          schema:
-            $ref: '#/definitions/response.APIResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/response.APIResponse'
-      summary: List assets by startup
-      tags:
-      - assets
   /startups/{id}/mark-sold:
     patch:
       description: Marks a startup as sold (sets status to 'sold'). Fails if startup
@@ -999,6 +957,48 @@ paths:
       summary: Update user (by UUID)
       tags:
       - users
+  /users/{uuid}/assets:
+    get:
+      description: Retrieves a paginated list of active assets for a specific user
+      parameters:
+      - description: User UUID
+        in: path
+        name: uuid
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User assets retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/assets.AssetList'
+              type: object
+        "400":
+          description: Invalid user UUID
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: List assets by user
+      tags:
+      - assets
   /users/checkVerification:
     post:
       consumes:

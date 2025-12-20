@@ -44,11 +44,10 @@ func TestPostgresAssetRepository_CreateAsset(t *testing.T) {
 
 	repo := NewPostgresAssetRepository(pool)
 	ctx := context.Background()
-	ownerID := testhelpers.CreateTestUser(t, pool)
-	sid := int64(testhelpers.CreateTestStartup(t, pool, ownerID))
+	ownerUUID := testhelpers.CreateTestUser(t, pool)
 
 	created, err := repo.CreateAsset(ctx, Asset{
-		StartupID:    sid,
+		UserUUID:     ownerUUID,
 		Title:        "Asset",
 		Description:  "desc",
 		AssetType:    "research",
@@ -61,7 +60,7 @@ func TestPostgresAssetRepository_CreateAsset(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotZero(t, created.ID)
-	require.Equal(t, sid, created.StartupID)
+	require.Equal(t, ownerUUID, created.UserUUID)
 	require.Equal(t, "Asset", created.Title)
 	require.False(t, created.CreatedAt.IsZero())
 }
@@ -72,10 +71,9 @@ func TestPostgresAssetRepository_UpdateAsset(t *testing.T) {
 
 	repo := NewPostgresAssetRepository(pool)
 	ctx := context.Background()
-	ownerID := testhelpers.CreateTestUser(t, pool)
-	sid := int64(testhelpers.CreateTestStartup(t, pool, ownerID))
+	ownerUUID := testhelpers.CreateTestUser(t, pool)
 
-	created, err := repo.CreateAsset(ctx, Asset{StartupID: sid, Title: "Old", AssetType: "data", IsNegotiable: true})
+	created, err := repo.CreateAsset(ctx, Asset{UserUUID: ownerUUID, Title: "Old", AssetType: "data", IsNegotiable: true})
 	require.NoError(t, err)
 
 	updated, err := repo.UpdateAsset(ctx, Asset{
@@ -102,10 +100,9 @@ func TestPostgresAssetRepository_DeleteAsset(t *testing.T) {
 
 	repo := NewPostgresAssetRepository(pool)
 	ctx := context.Background()
-	ownerID := testhelpers.CreateTestUser(t, pool)
-	sid := int64(testhelpers.CreateTestStartup(t, pool, ownerID))
+	ownerUUID := testhelpers.CreateTestUser(t, pool)
 
-	created, err := repo.CreateAsset(ctx, Asset{StartupID: sid, Title: "Delete", AssetType: "domain"})
+	created, err := repo.CreateAsset(ctx, Asset{UserUUID: ownerUUID, Title: "Delete", AssetType: "domain"})
 	require.NoError(t, err)
 
 	require.NoError(t, repo.DeleteAsset(ctx, created.ID))
@@ -120,13 +117,12 @@ func TestPostgresAssetRepository_ListAssets_WithFilters(t *testing.T) {
 
 	repo := NewPostgresAssetRepository(pool)
 	ctx := context.Background()
-	ownerID := testhelpers.CreateTestUser(t, pool)
-	sid := int64(testhelpers.CreateTestStartup(t, pool, ownerID))
+	ownerUUID := testhelpers.CreateTestUser(t, pool)
 
 	assetsToCreate := []Asset{
-		{StartupID: sid, Title: "One", AssetType: "research", IsSold: false, IsActive: true},
-		{StartupID: sid, Title: "Two", AssetType: "product", IsSold: true, IsActive: true},
-		{StartupID: sid, Title: "Three", AssetType: "product", IsSold: false, IsActive: true},
+		{UserUUID: ownerUUID, Title: "One", AssetType: "research", IsSold: false, IsActive: true},
+		{UserUUID: ownerUUID, Title: "Two", AssetType: "product", IsSold: true, IsActive: true},
+		{UserUUID: ownerUUID, Title: "Three", AssetType: "product", IsSold: false, IsActive: true},
 	}
 	for _, a := range assetsToCreate {
 		_, err := repo.CreateAsset(ctx, a)

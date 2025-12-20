@@ -60,12 +60,12 @@ func TestStartupHandler_CreateStartup_Success(t *testing.T) {
 	svc := new(mockStartupService)
 	r := setupRouter(svc)
 
-	expected := Startup{ID: 1, Name: "Acme", OwnerID: 1, Status: "active"}
+	expected := Startup{ID: 1, Name: "Acme", OwnerUUID: "user-uuid-1", Status: "active"}
 	svc.On("CreateStartup", mock.Anything, mock.MatchedBy(func(input Startup) bool {
-		return input.Name == "Acme" && input.OwnerID == 1 && input.Status == "active"
+		return input.Name == "Acme" && input.OwnerUUID == "user-uuid-1" && input.Status == "active"
 	})).Return(expected, nil)
 
-	reqBody := `{"name":"Acme","description":"desc","logo_url":"logo","owner_id":1,"status":"active"}`
+	reqBody := `{"name":"Acme","description":"desc","logo_url":"logo","owner_uuid":"user-uuid-1","status":"active"}`
 	req := httptest.NewRequest(http.MethodPost, "/startups", strings.NewReader(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
@@ -92,7 +92,7 @@ func TestStartupHandler_CreateStartup_InvalidPayload(t *testing.T) {
 	svc := new(mockStartupService)
 	r := setupRouter(svc)
 
-	req := httptest.NewRequest(http.MethodPost, "/startups", strings.NewReader(`{"owner_id":1}`))
+	req := httptest.NewRequest(http.MethodPost, "/startups", strings.NewReader(`{"owner_uuid":"user-uuid-1"}`))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -111,7 +111,7 @@ func TestStartupHandler_CreateStartup_InvalidStatus(t *testing.T) {
 	svc := new(mockStartupService)
 	r := setupRouter(svc)
 
-	req := httptest.NewRequest(http.MethodPost, "/startups", strings.NewReader(`{"name":"Acme","owner_id":1,"status":"weird"}`))
+	req := httptest.NewRequest(http.MethodPost, "/startups", strings.NewReader(`{"name":"Acme","owner_uuid":"user-uuid-1","status":"weird"}`))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 

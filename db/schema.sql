@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
     role TEXT NOT NULL CHECK (role IN ('buyer', 'founder')),
     password_hash TEXT NOT NULL,
     profile_pic_url TEXT,
-    uuid TEXT,
+    uuid TEXT UNIQUE NOT NULL,
     verified_at TIMESTAMP NULL,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -18,23 +18,23 @@ CREATE TABLE IF NOT EXISTS startups (
     name TEXT NOT NULL,
     description TEXT,
     logo_url TEXT,                -- image stored as string
-    owner_id INT NOT NULL,
+    owner_uuid TEXT NOT NULL,
     status TEXT NOT NULL CHECK (status IN ('active', 'failed', 'sold')) DEFAULT 'failed',
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT fk_startups_owner
-        FOREIGN KEY (owner_id)
-        REFERENCES users(id)
+    CONSTRAINT fk_startups_owner_uuid
+        FOREIGN KEY (owner_uuid)
+        REFERENCES users(uuid)
         ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS idx_startups_owner_id ON startups(owner_id);
+CREATE INDEX IF NOT EXISTS idx_startups_owner_uuid ON startups(owner_uuid);
 CREATE INDEX IF NOT EXISTS idx_startups_is_deleted ON startups(is_deleted);
 
 CREATE TABLE IF NOT EXISTS assets (
     id SERIAL PRIMARY KEY,
-    startup_id INT NOT NULL,
+    user_uuid TEXT NOT NULL,
     title TEXT NOT NULL,
     description TEXT,
     asset_type TEXT NOT NULL CHECK (
@@ -48,13 +48,13 @@ CREATE TABLE IF NOT EXISTS assets (
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT fk_assets_startup
-        FOREIGN KEY (startup_id)
-        REFERENCES startups(id)
+    CONSTRAINT fk_assets_user
+        FOREIGN KEY (user_uuid)
+        REFERENCES users(uuid)
         ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS idx_assets_startup_id ON assets(startup_id);
+CREATE INDEX IF NOT EXISTS idx_assets_user_uuid ON assets(user_uuid);
 CREATE INDEX IF NOT EXISTS idx_assets_is_sold ON assets(is_sold);
 CREATE INDEX IF NOT EXISTS idx_assets_is_active ON assets(is_active);
 CREATE INDEX IF NOT EXISTS idx_assets_is_deleted ON assets(is_deleted);

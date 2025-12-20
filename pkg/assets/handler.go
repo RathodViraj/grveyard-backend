@@ -32,11 +32,11 @@ func (h *AssetHandler) RegisterRoutes(router *gin.Engine) {
 	router.DELETE("/assets/:id", h.deleteAsset)
 	router.GET("/assets", h.listAssets)
 	router.GET("/assets/:id", h.getAssetByID)
-	router.GET("/startups/:id/assets", h.listAssetsByStartup)
+	router.GET("/users/:uuid/assets", h.listAssetsByUser)
 }
 
 type createAssetRequest struct {
-	StartupID    int64   `json:"startup_id" binding:"required"`
+	UserUUID     string  `json:"user_uuid" binding:"required"`
 	Title        string  `json:"title" binding:"required"`
 	Description  string  `json:"description"`
 	AssetType    string  `json:"asset_type" binding:"required"`
@@ -73,8 +73,8 @@ func (h *AssetHandler) createAsset(c *gin.Context) {
 		return
 	}
 
-	if req.StartupID <= 0 {
-		response.SendAPIResponse(c, http.StatusBadRequest, false, "startup_id must be positive", nil)
+	if req.UserUUID == "" {
+		response.SendAPIResponse(c, http.StatusBadRequest, false, "user_uuid must be provided", nil)
 		return
 	}
 
@@ -89,7 +89,7 @@ func (h *AssetHandler) createAsset(c *gin.Context) {
 	}
 
 	asset, err := h.service.CreateAsset(c.Request.Context(), Asset{
-		StartupID:    req.StartupID,
+		UserUUID:     req.UserUUID,
 		Title:        req.Title,
 		Description:  req.Description,
 		AssetType:    req.AssetType,
@@ -229,7 +229,7 @@ func (h *AssetHandler) getAssetByID(c *gin.Context) {
 // @Produce      json
 // @Param        page        query     int     false  "Page number" default(1)
 // @Param        limit       query     int     false  "Items per page" default(10)
-// @Param        startup_id  query     int     false  "Filter by startup ID"
+// @Param        user_uuid   query     string  false  "Filter by user UUID"
 // @Param        asset_type  query     string  false  "Filter by asset type" Enums(research, codebase, domain, product, data, other)
 // @Param        is_sold     query     bool    false  "Filter by sold status"
 // @Success      200  {object}  response.APIResponse{data=AssetList} "Assets retrieved successfully"
@@ -251,11 +251,8 @@ func (h *AssetHandler) listAssets(c *gin.Context) {
 
 	filters := AssetFilters{}
 
-	if startupIDStr := c.Query("startup_id"); startupIDStr != "" {
-		startupID, err := strconv.ParseInt(startupIDStr, 10, 64)
-		if err == nil && startupID > 0 {
-			filters.StartupID = &startupID
-		}
+	if userUUID := c.Query("user_uuid"); userUUID != "" {
+		filters.UserUUID = &userUUID
 	}
 
 	if assetType := c.Query("asset_type"); assetType != "" {
@@ -281,21 +278,21 @@ func (h *AssetHandler) listAssets(c *gin.Context) {
 	response.SendAPIResponse(c, http.StatusOK, true, "assets listed", data)
 }
 
-// @Summary      List assets by startup
-// @Description  Retrieves a paginated list of active assets for a specific startup
+// @Summary      List assets by user
+// @Description  Retrieves a paginated list of active assets for a specific user
 // @Tags         assets
 // @Produce      json
-// @Param        id     path      int  true   "Startup ID"
+// @Param        uuid   path      string  true   "User UUID"
 // @Param        page   query     int  false  "Page number" default(1)
 // @Param        limit  query     int  false  "Items per page" default(10)
-// @Success      200  {object}  response.APIResponse{data=AssetList} "Startup assets retrieved successfully"
-// @Failure      400  {object}  response.APIResponse "Invalid startup ID"
+// @Success      200  {object}  response.APIResponse{data=AssetList} "User assets retrieved successfully"
+// @Failure      400  {object}  response.APIResponse "Invalid user UUID"
 // @Failure      500  {object}  response.APIResponse "Internal server error"
-// @Router       /startups/{id}/assets [get]
-func (h *AssetHandler) listAssetsByStartup(c *gin.Context) {
-	startupID, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil || startupID <= 0 {
-		response.SendAPIResponse(c, http.StatusBadRequest, false, "invalid startup id", nil)
+// @Router       /users/{uuid}/assets [get]
+func (h *AssetHandler) listAssetsByUser(c *gin.Context) {
+	userUUID := c.Param("uuid")
+	if userUUID == "" {
+		response.SendAPIResponse(c, http.StatusBadRequest, false, "invalid user uuid", nil)
 		return
 	}
 
@@ -312,7 +309,7 @@ func (h *AssetHandler) listAssetsByStartup(c *gin.Context) {
 		limit = 100
 	}
 
-	assetsList, total, err := h.service.ListAssetsByStartup(c.Request.Context(), startupID, page, limit)
+	assetsList, total, err := h.service.ListAssetsByUser(c.Request.Context(), userUUID, page, limit)
 	if err != nil {
 		response.SendAPIResponse(c, http.StatusInternalServerError, false, err.Error(), nil)
 		return

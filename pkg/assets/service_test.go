@@ -41,8 +41,8 @@ func (m *mockAssetRepository) ListAssets(ctx context.Context, filters AssetFilte
 	return assets, args.Get(1).(int64), args.Error(2)
 }
 
-func (m *mockAssetRepository) ListAssetsByStartup(ctx context.Context, startupID int64, limit, offset int) ([]Asset, int64, error) {
-	args := m.Called(ctx, startupID, limit, offset)
+func (m *mockAssetRepository) ListAssetsByUser(ctx context.Context, userUUID string, limit, offset int) ([]Asset, int64, error) {
+	args := m.Called(ctx, userUUID, limit, offset)
 	assets, _ := args.Get(0).([]Asset)
 	return assets, args.Get(1).(int64), args.Error(2)
 }
@@ -59,13 +59,13 @@ func TestAssetService_ListAssets_Defaults(t *testing.T) {
 	repo.AssertExpectations(t)
 }
 
-func TestAssetService_ListAssetsByStartup_Defaults(t *testing.T) {
+func TestAssetService_ListAssetsByUser_Defaults(t *testing.T) {
 	repo := new(mockAssetRepository)
 	service := NewAssetService(repo)
 
-	repo.On("ListAssetsByStartup", mock.Anything, int64(5), 10, 0).Return([]Asset{}, int64(0), nil)
+	repo.On("ListAssetsByUser", mock.Anything, "u-5", 10, 0).Return([]Asset{}, int64(0), nil)
 
-	_, _, err := service.ListAssetsByStartup(context.Background(), 5, 0, 0)
+	_, _, err := service.ListAssetsByUser(context.Background(), "u-5", 0, 0)
 
 	require.NoError(t, err)
 	repo.AssertExpectations(t)

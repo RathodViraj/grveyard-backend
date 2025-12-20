@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -43,7 +44,13 @@ func ConnectToLocal() *pgxpool.Pool {
 		log.Fatal("Database ping failed:", err)
 	}
 
-	log.Println("Connected to PostgreSQL")
+	if !strings.EqualFold(os.Getenv("APPLY_SCHEMA_ON_START"), "false") {
+		schemaCtx, cancelSchema := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancelSchema()
+		if err := ApplySchema(schemaCtx, DB); err != nil {
+			log.Fatal("Failed to apply schema:", err)
+		}
+	}
 	return DB
 }
 

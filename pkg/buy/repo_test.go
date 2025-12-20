@@ -44,9 +44,8 @@ func TestPostgresBuyRepository_MarkAssetSold(t *testing.T) {
 
 	repo := NewPostgresBuyRepository(pool)
 	ctx := context.Background()
-	ownerID := testhelpers.CreateTestUser(t, pool)
-	sid := testhelpers.CreateTestStartup(t, pool, ownerID)
-	aid := testhelpers.CreateTestAsset(t, pool, sid)
+	ownerUUID := testhelpers.CreateTestUser(t, pool)
+	aid := testhelpers.CreateTestAsset(t, pool, ownerUUID)
 
 	require.NoError(t, repo.MarkAssetSold(ctx, int64(aid)))
 
@@ -62,9 +61,8 @@ func TestPostgresBuyRepository_UnlistAsset(t *testing.T) {
 
 	repo := NewPostgresBuyRepository(pool)
 	ctx := context.Background()
-	ownerID := testhelpers.CreateTestUser(t, pool)
-	sid := testhelpers.CreateTestStartup(t, pool, ownerID)
-	aid := testhelpers.CreateTestAsset(t, pool, sid)
+	ownerUUID := testhelpers.CreateTestUser(t, pool)
+	aid := testhelpers.CreateTestAsset(t, pool, ownerUUID)
 
 	require.NoError(t, repo.UnlistAsset(ctx, int64(aid)))
 
@@ -79,8 +77,8 @@ func TestPostgresBuyRepository_MarkStartupSold(t *testing.T) {
 
 	repo := NewPostgresBuyRepository(pool)
 	ctx := context.Background()
-	ownerID := testhelpers.CreateTestUser(t, pool)
-	sid := testhelpers.CreateTestStartup(t, pool, ownerID)
+	ownerUUID := testhelpers.CreateTestUser(t, pool)
+	sid := testhelpers.CreateTestStartup(t, pool, ownerUUID)
 
 	require.NoError(t, repo.MarkStartupSold(ctx, int64(sid)))
 
@@ -95,8 +93,8 @@ func TestPostgresBuyRepository_UnlistStartup(t *testing.T) {
 
 	repo := NewPostgresBuyRepository(pool)
 	ctx := context.Background()
-	ownerID := testhelpers.CreateTestUser(t, pool)
-	sid := testhelpers.CreateTestStartup(t, pool, ownerID)
+	ownerUUID := testhelpers.CreateTestUser(t, pool)
+	sid := testhelpers.CreateTestStartup(t, pool, ownerUUID)
 
 	require.NoError(t, repo.UnlistStartup(ctx, int64(sid)))
 

@@ -100,5 +100,21 @@ func ApplySchema(ctx context.Context, pool *pgxpool.Pool) error {
 	}
 
 	log.Println("Schema applied from", schemaPath)
+
+	// Optionally apply updates/migrations
+	updatePath := os.Getenv("SCHEMA_UPDATE_PATH")
+	if updatePath == "" {
+		updatePath = "db/schema_update.sql"
+	}
+	if b, err := os.ReadFile(updatePath); err == nil {
+		upd := strings.TrimSpace(string(b))
+		if upd != "" {
+			if _, err := pool.Exec(ctx, upd); err != nil {
+				return fmt.Errorf("execute schema update: %w", err)
+			}
+			log.Println("Schema updates applied from", updatePath)
+		}
+	}
+	log.Println("Database schema is up to date")
 	return nil
 }

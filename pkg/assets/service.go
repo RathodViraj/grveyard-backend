@@ -8,7 +8,7 @@ type AssetService interface {
 	DeleteAsset(ctx context.Context, id int64) error
 	GetAssetByID(ctx context.Context, id int64) (Asset, error)
 	ListAssets(ctx context.Context, filters AssetFilters, page, limit int) ([]Asset, int64, error)
-	ListAssetsByStartup(ctx context.Context, startupID int64, page, limit int) ([]Asset, int64, error)
+	ListAssetsByUser(ctx context.Context, userUUID string, page, limit int) ([]Asset, int64, error)
 }
 
 type assetService struct {
@@ -46,7 +46,7 @@ func (s *assetService) ListAssets(ctx context.Context, filters AssetFilters, pag
 	return s.repo.ListAssets(ctx, filters, limit, offset)
 }
 
-func (s *assetService) ListAssetsByStartup(ctx context.Context, startupID int64, page, limit int) ([]Asset, int64, error) {
+func (s *assetService) ListAssetsByUser(ctx context.Context, userUUID string, page, limit int) ([]Asset, int64, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -54,5 +54,5 @@ func (s *assetService) ListAssetsByStartup(ctx context.Context, startupID int64,
 		limit = 10
 	}
 	offset := (page - 1) * limit
-	return s.repo.ListAssetsByStartup(ctx, startupID, limit, offset)
+	return s.repo.ListAssetsByUser(ctx, userUUID, limit, offset)
 }

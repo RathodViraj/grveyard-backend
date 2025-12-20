@@ -41,7 +41,7 @@ type createStartupRequest struct {
 	Name        string `json:"name" binding:"required"`
 	Description string `json:"description"`
 	LogoURL     string `json:"logo_url"`
-	OwnerID     int64  `json:"owner_id" binding:"required"`
+	OwnerUUID   string `json:"owner_uuid" binding:"required"`
 	Status      string `json:"status"`
 }
 
@@ -69,8 +69,8 @@ func (h *StartupHandler) createStartup(c *gin.Context) {
 		return
 	}
 
-	if req.OwnerID <= 0 {
-		response.SendAPIResponse(c, http.StatusBadRequest, false, "owner_id must be positive", nil)
+	if req.OwnerUUID == "" {
+		response.SendAPIResponse(c, http.StatusBadRequest, false, "owner_uuid must be provided", nil)
 		return
 	}
 
@@ -83,7 +83,7 @@ func (h *StartupHandler) createStartup(c *gin.Context) {
 		Name:        req.Name,
 		Description: req.Description,
 		LogoURL:     req.LogoURL,
-		OwnerID:     req.OwnerID,
+		OwnerUUID:   req.OwnerUUID,
 		Status:      req.Status,
 	})
 	if err != nil {

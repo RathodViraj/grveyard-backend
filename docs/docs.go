@@ -43,9 +43,9 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "type": "integer",
-                        "description": "Filter by startup ID",
-                        "name": "startup_id",
+                        "type": "string",
+                        "description": "Filter by user UUID",
+                        "name": "user_uuid",
                         "in": "query"
                     },
                     {
@@ -755,73 +755,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/startups/{id}/assets": {
-            "get": {
-                "description": "Retrieves a paginated list of active assets for a specific startup",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "assets"
-                ],
-                "summary": "List assets by startup",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Startup ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "default": 1,
-                        "description": "Page number",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 10,
-                        "description": "Items per page",
-                        "name": "limit",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Startup assets retrieved successfully",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.APIResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/assets.AssetList"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid startup ID",
-                        "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/startups/{id}/mark-sold": {
             "patch": {
                 "description": "Marks a startup as sold (sets status to 'sold'). Fails if startup is already sold.",
@@ -1347,6 +1280,73 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/{uuid}/assets": {
+            "get": {
+                "description": "Retrieves a paginated list of active assets for a specific user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "assets"
+                ],
+                "summary": "List assets by user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User UUID",
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Items per page",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User assets retrieved successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/assets.AssetList"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user UUID",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/verifyOTP": {
             "post": {
                 "description": "Verify the one-time password for the provided email",
@@ -1425,10 +1425,10 @@ const docTemplate = `{
                 "price": {
                     "type": "number"
                 },
-                "startup_id": {
-                    "type": "integer"
-                },
                 "title": {
+                    "type": "string"
+                },
+                "user_uuid": {
                     "type": "string"
                 }
             }
@@ -1457,8 +1457,8 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "asset_type",
-                "startup_id",
-                "title"
+                "title",
+                "user_uuid"
             ],
             "properties": {
                 "asset_type": {
@@ -1479,10 +1479,10 @@ const docTemplate = `{
                 "price": {
                     "type": "number"
                 },
-                "startup_id": {
-                    "type": "integer"
-                },
                 "title": {
+                    "type": "string"
+                },
+                "user_uuid": {
                     "type": "string"
                 }
             }
@@ -1576,8 +1576,8 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "owner_id": {
-                    "type": "integer"
+                "owner_uuid": {
+                    "type": "string"
                 },
                 "status": {
                     "type": "string"
@@ -1608,7 +1608,7 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "name",
-                "owner_id"
+                "owner_uuid"
             ],
             "properties": {
                 "description": {
@@ -1620,8 +1620,8 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "owner_id": {
-                    "type": "integer"
+                "owner_uuid": {
+                    "type": "string"
                 },
                 "status": {
                     "type": "string"

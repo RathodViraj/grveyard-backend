@@ -27,14 +27,14 @@ func NewPostgresStartupRepository(pool *pgxpool.Pool) StartupRepository {
 }
 
 func (r *postgresStartupRepository) CreateStartup(ctx context.Context, input Startup) (Startup, error) {
-	query := `INSERT INTO startups (name, description, logo_url, owner_id, status, created_at)
-              VALUES ($1, $2, $3, $4, $5, NOW())
-              RETURNING id, name, description, logo_url, owner_id, status, created_at`
+	query := `INSERT INTO startups (name, description, logo_url, owner_uuid, status, created_at)
+			  VALUES ($1, $2, $3, $4, $5, NOW())
+			  RETURNING id, name, description, logo_url, owner_uuid, status, created_at`
 
-	row := r.pool.QueryRow(ctx, query, input.Name, input.Description, input.LogoURL, input.OwnerID, input.Status)
+	row := r.pool.QueryRow(ctx, query, input.Name, input.Description, input.LogoURL, input.OwnerUUID, input.Status)
 
 	var created Startup
-	if err := row.Scan(&created.ID, &created.Name, &created.Description, &created.LogoURL, &created.OwnerID, &created.Status, &created.CreatedAt); err != nil {
+	if err := row.Scan(&created.ID, &created.Name, &created.Description, &created.LogoURL, &created.OwnerUUID, &created.Status, &created.CreatedAt); err != nil {
 		return Startup{}, err
 	}
 
@@ -43,14 +43,14 @@ func (r *postgresStartupRepository) CreateStartup(ctx context.Context, input Sta
 
 func (r *postgresStartupRepository) UpdateStartup(ctx context.Context, input Startup) (Startup, error) {
 	query := `UPDATE startups
-              SET name = $1, description = $2, logo_url = $3, status = $4
-              WHERE id = $5
-              RETURNING id, name, description, logo_url, owner_id, status, created_at`
+			  SET name = $1, description = $2, logo_url = $3, status = $4
+			  WHERE id = $5
+			  RETURNING id, name, description, logo_url, owner_uuid, status, created_at`
 
 	row := r.pool.QueryRow(ctx, query, input.Name, input.Description, input.LogoURL, input.Status, input.ID)
 
 	var updated Startup
-	if err := row.Scan(&updated.ID, &updated.Name, &updated.Description, &updated.LogoURL, &updated.OwnerID, &updated.Status, &updated.CreatedAt); err != nil {
+	if err := row.Scan(&updated.ID, &updated.Name, &updated.Description, &updated.LogoURL, &updated.OwnerUUID, &updated.Status, &updated.CreatedAt); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return Startup{}, ErrStartupNotFound
 		}
@@ -72,14 +72,14 @@ func (r *postgresStartupRepository) DeleteStartup(ctx context.Context, id int64)
 }
 
 func (r *postgresStartupRepository) GetStartupByID(ctx context.Context, id int64) (Startup, error) {
-	query := `SELECT id, name, description, logo_url, owner_id, status, created_at
+	query := `SELECT id, name, description, logo_url, owner_uuid, status, created_at
               FROM startups
               WHERE id = $1 AND is_deleted = false`
 
 	row := r.pool.QueryRow(ctx, query, id)
 
 	var s Startup
-	if err := row.Scan(&s.ID, &s.Name, &s.Description, &s.LogoURL, &s.OwnerID, &s.Status, &s.CreatedAt); err != nil {
+	if err := row.Scan(&s.ID, &s.Name, &s.Description, &s.LogoURL, &s.OwnerUUID, &s.Status, &s.CreatedAt); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return Startup{}, ErrStartupNotFound
 		}
@@ -90,7 +90,7 @@ func (r *postgresStartupRepository) GetStartupByID(ctx context.Context, id int64
 }
 
 func (r *postgresStartupRepository) ListStartups(ctx context.Context, limit, offset int) ([]Startup, int64, error) {
-	query := `SELECT id, name, description, logo_url, owner_id, status, created_at
+	query := `SELECT id, name, description, logo_url, owner_uuid, status, created_at
               FROM startups
               WHERE is_deleted = false
               ORDER BY id
@@ -105,7 +105,7 @@ func (r *postgresStartupRepository) ListStartups(ctx context.Context, limit, off
 	startups := make([]Startup, 0)
 	for rows.Next() {
 		var s Startup
-		if err := rows.Scan(&s.ID, &s.Name, &s.Description, &s.LogoURL, &s.OwnerID, &s.Status, &s.CreatedAt); err != nil {
+		if err := rows.Scan(&s.ID, &s.Name, &s.Description, &s.LogoURL, &s.OwnerUUID, &s.Status, &s.CreatedAt); err != nil {
 			return nil, 0, err
 		}
 		startups = append(startups, s)

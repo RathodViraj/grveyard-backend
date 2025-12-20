@@ -39,17 +39,17 @@ func cleanDatabase(t *testing.T, pool *pgxpool.Pool) {
 	require.NoError(t, err)
 }
 
-func insertTestUser(t *testing.T, pool *pgxpool.Pool, name string) int64 {
+func insertTestUserUUID(t *testing.T, pool *pgxpool.Pool, name string) string {
 	t.Helper()
 
 	ctx := context.Background()
 	email := fmt.Sprintf("%s-%d@example.com", name, time.Now().UnixNano())
+	userUUID := fmt.Sprintf("test-uuid-%d", time.Now().UnixNano())
 
-	var id int64
-	err := pool.QueryRow(ctx, "INSERT INTO users (name, email, role, password_hash) VALUES ($1, $2, 'founder', $3) RETURNING id", name, email, "hash").Scan(&id)
+	_, err := pool.Exec(ctx, "INSERT INTO users (name, email, role, password_hash, uuid) VALUES ($1, $2, 'founder', $3, $4)", name, email, "hash", userUUID)
 	require.NoError(t, err)
 
-	return id
+	return userUUID
 }
 
 func TestPostgresStartupRepository_CreateStartup(t *testing.T) {
@@ -58,13 +58,13 @@ func TestPostgresStartupRepository_CreateStartup(t *testing.T) {
 
 	repo := NewPostgresStartupRepository(pool)
 	ctx := context.Background()
-	ownerID := insertTestUser(t, pool, "Alice")
+	ownerUUID := insertTestUserUUID(t, pool, "Alice")
 
 	created, err := repo.CreateStartup(ctx, Startup{
 		Name:        "Acme",
 		Description: "Acme desc",
 		LogoURL:     "https://example.com/logo.png",
-		OwnerID:     ownerID,
+		OwnerUUID:   ownerUUID,
 		Status:      "active",
 	})
 
@@ -79,13 +79,13 @@ func TestPostgresStartupRepository_UpdateStartup(t *testing.T) {
 
 	repo := NewPostgresStartupRepository(pool)
 	ctx := context.Background()
-	ownerID := insertTestUser(t, pool, "Bob")
+	ownerUUID := insertTestUserUUID(t, pool, "Bob")
 
 	created, err := repo.CreateStartup(ctx, Startup{
 		Name:        "Old",
 		Description: "Old desc",
 		LogoURL:     "old.png",
-		OwnerID:     ownerID,
+		OwnerUUID:   ownerUUID,
 		Status:      "failed",
 	})
 	require.NoError(t, err)
@@ -100,7 +100,7 @@ func TestPostgresStartupRepository_UpdateStartup(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, created.ID, updated.ID)
-	require.Equal(t, ownerID, updated.OwnerID)
+	require.Equal(t, ownerUUID, updated.OwnerUUID)
 	require.Equal(t, "New", updated.Name)
 	require.Equal(t, "Updated desc", updated.Description)
 	require.Equal(t, "new.png", updated.LogoURL)
@@ -113,13 +113,13 @@ func TestPostgresStartupRepository_DeleteStartup(t *testing.T) {
 
 	repo := NewPostgresStartupRepository(pool)
 	ctx := context.Background()
-	ownerID := insertTestUser(t, pool, "Carol")
+	ownerUUID := insertTestUserUUID(t, pool, "Carol")
 
 	created, err := repo.CreateStartup(ctx, Startup{
 		Name:        "DeleteMe",
 		Description: "To be deleted",
 		LogoURL:     "del.png",
-		OwnerID:     ownerID,
+		OwnerUUID:   ownerUUID,
 		Status:      "active",
 	})
 	require.NoError(t, err)
