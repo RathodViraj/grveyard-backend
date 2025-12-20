@@ -21,12 +21,21 @@ ALTER TABLE IF EXISTS users ALTER COLUMN uuid SET NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS uniq_users_uuid ON users(uuid);
 -- Migrations to shift owner_id -> owner_uuid and startup_id -> user_uuid
 
--- Startups: drop old FK/index, replace column
+-- Startups: drop old FK/index, replace column (safe for both old and new schemas)
 ALTER TABLE IF EXISTS startups DROP CONSTRAINT IF EXISTS fk_startups_owner;
 DROP INDEX IF EXISTS idx_startups_owner_id;
 ALTER TABLE IF EXISTS startups DROP COLUMN IF EXISTS owner_id;
 ALTER TABLE IF EXISTS startups ADD COLUMN IF NOT EXISTS owner_uuid TEXT;
-ALTER TABLE IF EXISTS startups ALTER COLUMN owner_uuid SET NOT NULL;
+-- Only alter column to NOT NULL if it exists and is nullable
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'startups' AND column_name = 'owner_uuid' AND is_nullable = 'YES'
+    ) THEN
+        ALTER TABLE startups ALTER COLUMN owner_uuid SET NOT NULL;
+    END IF;
+END $$;
 -- Only add FK if it doesn't already exist
 DO $$
 BEGIN
@@ -39,12 +48,21 @@ BEGIN
 END $$;
 CREATE INDEX IF NOT EXISTS idx_startups_owner_uuid ON startups(owner_uuid);
 
--- Assets: drop old FK/index, replace column
+-- Assets: drop old FK/index, replace column (safe for both old and new schemas)
 ALTER TABLE IF EXISTS assets DROP CONSTRAINT IF EXISTS fk_assets_startup;
 DROP INDEX IF EXISTS idx_assets_startup_id;
 ALTER TABLE IF EXISTS assets DROP COLUMN IF EXISTS startup_id;
 ALTER TABLE IF EXISTS assets ADD COLUMN IF NOT EXISTS user_uuid TEXT;
-ALTER TABLE IF EXISTS assets ALTER COLUMN user_uuid SET NOT NULL;
+-- Only alter column to NOT NULL if it exists and is nullable
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'assets' AND column_name = 'user_uuid' AND is_nullable = 'YES'
+    ) THEN
+        ALTER TABLE assets ALTER COLUMN user_uuid SET NOT NULL;
+    END IF;
+END $$;
 -- Only add FK if it doesn't already exist
 DO $$
 BEGIN
