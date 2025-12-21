@@ -33,6 +33,7 @@ func (h *StartupHandler) RegisterRoutes(router *gin.Engine) {
 	router.POST("/startups", h.createStartup)
 	router.PUT("/startups/:id", h.updateStartup)
 	router.DELETE("/startups/:id", h.deleteStartup)
+	router.DELETE("/startups", h.deleteAllStartups)
 	router.GET("/startups", h.listStartups)
 	router.GET("/startups/:id", h.getStartupByID)
 }
@@ -233,4 +234,20 @@ func (h *StartupHandler) listStartups(c *gin.Context) {
 
 	data := StartupList{Items: startupsList, Total: total, Page: page, Limit: limit}
 	response.SendAPIResponse(c, http.StatusOK, true, "startups listed", data)
+}
+
+// @Summary      Delete all startups
+// @Description  Soft deletes all startups by setting is_deleted to true
+// @Tags         startups
+// @Produce      json
+// @Success      200  {object}  response.APIResponse "All startups deleted successfully"
+// @Failure      500  {object}  response.APIResponse "Internal server error"
+// @Router       /startups [delete]
+func (h *StartupHandler) deleteAllStartups(c *gin.Context) {
+	if err := h.service.DeleteAllStartups(c.Request.Context()); err != nil {
+		response.SendAPIResponse(c, http.StatusInternalServerError, false, err.Error(), nil)
+		return
+	}
+
+	response.SendAPIResponse(c, http.StatusOK, true, "all startups deleted", nil)
 }

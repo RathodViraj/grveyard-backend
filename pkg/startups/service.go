@@ -6,6 +6,7 @@ type StartupService interface {
 	CreateStartup(ctx context.Context, input Startup) (Startup, error)
 	UpdateStartup(ctx context.Context, input Startup) (Startup, error)
 	DeleteStartup(ctx context.Context, id int64) error
+	DeleteAllStartups(ctx context.Context) error
 	GetStartupByID(ctx context.Context, id int64) (Startup, error)
 	ListStartups(ctx context.Context, page, limit int) ([]Startup, int64, error)
 }
@@ -49,4 +50,8 @@ func (s *startupService) ListStartups(ctx context.Context, page, limit int) ([]S
 	}
 	offset := (page - 1) * limit
 	return s.repo.ListStartups(ctx, limit, offset)
+}
+
+func (s *startupService) DeleteAllStartups(ctx context.Context) error {
+	return s.repo.DeleteAllStartups(ctx)
 }

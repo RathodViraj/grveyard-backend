@@ -16,6 +16,8 @@ type AssetRepository interface {
 	CreateAsset(ctx context.Context, input Asset) (Asset, error)
 	UpdateAsset(ctx context.Context, input Asset) (Asset, error)
 	DeleteAsset(ctx context.Context, id int64) error
+	DeleteAllAssets(ctx context.Context) error
+	DeleteAllAssetsByUserUUID(ctx context.Context, userUUID string) error
 	GetAssetByID(ctx context.Context, id int64) (Asset, error)
 	ListAssets(ctx context.Context, filters AssetFilters, limit, offset int) ([]Asset, int64, error)
 	ListAssetsByUser(ctx context.Context, userUUID string, limit, offset int) ([]Asset, int64, error)
@@ -195,4 +197,14 @@ func (r *postgresAssetRepository) ListAssetsByUser(ctx context.Context, userUUID
 	}
 
 	return assetsList, total, nil
+}
+
+func (r *postgresAssetRepository) DeleteAllAssets(ctx context.Context) error {
+	_, err := r.pool.Exec(ctx, "UPDATE assets SET is_deleted = true WHERE is_deleted = false")
+	return err
+}
+
+func (r *postgresAssetRepository) DeleteAllAssetsByUserUUID(ctx context.Context, userUUID string) error {
+	_, err := r.pool.Exec(ctx, "UPDATE assets SET is_deleted = true WHERE user_uuid = $1 AND is_deleted = false", userUUID)
+	return err
 }

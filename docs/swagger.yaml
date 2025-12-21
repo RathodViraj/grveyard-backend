@@ -258,6 +258,22 @@ info:
   version: "1.0"
 paths:
   /assets:
+    delete:
+      description: Soft deletes all assets by setting is_deleted to true
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: All assets deleted successfully
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Delete all assets
+      tags:
+      - assets
     get:
       description: Retrieves a paginated list of active assets with optional filters
       parameters:
@@ -551,6 +567,22 @@ paths:
       tags:
       - OTP
   /startups:
+    delete:
+      description: Soft deletes all startups by setting is_deleted to true
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: All startups deleted successfully
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Delete all startups
+      tags:
+      - startups
     get:
       description: Retrieves a paginated list of all startups
       parameters:
@@ -997,6 +1029,34 @@ paths:
           schema:
             $ref: '#/definitions/response.APIResponse'
       summary: List assets by user
+      tags:
+      - assets
+  /users/{uuid}/assets/delete-all:
+    delete:
+      description: Soft deletes all assets for a specific user by setting is_deleted
+        to true
+      parameters:
+      - description: User UUID
+        in: path
+        name: uuid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: All user assets deleted successfully
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Invalid user UUID
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Delete all assets by user UUID
       tags:
       - assets
   /users/checkVerification:

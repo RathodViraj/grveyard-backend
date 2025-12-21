@@ -54,6 +54,16 @@ func (m *mockAssetService) ListAssetsByUser(ctx context.Context, userUUID string
 	return assets, args.Get(1).(int64), args.Error(2)
 }
 
+func (m *mockAssetService) DeleteAllAssets(ctx context.Context) error {
+	args := m.Called(ctx)
+	return args.Error(0)
+}
+
+func (m *mockAssetService) DeleteAllAssetsByUserUUID(ctx context.Context, userUUID string) error {
+	args := m.Called(ctx, userUUID)
+	return args.Error(0)
+}
+
 func setupAssetRouter(service AssetService) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()

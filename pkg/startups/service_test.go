@@ -42,6 +42,11 @@ func (m *mockStartupRepository) ListStartups(ctx context.Context, limit, offset 
 	return startups, args.Get(1).(int64), args.Error(2)
 }
 
+func (m *mockStartupRepository) DeleteAllStartups(ctx context.Context) error {
+	args := m.Called(ctx)
+	return args.Error(0)
+}
+
 func TestStartupService_CreateStartup_DefaultStatus(t *testing.T) {
 	repo := new(mockStartupRepository)
 	service := NewStartupService(repo)

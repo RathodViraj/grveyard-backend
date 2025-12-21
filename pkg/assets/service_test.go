@@ -47,6 +47,16 @@ func (m *mockAssetRepository) ListAssetsByUser(ctx context.Context, userUUID str
 	return assets, args.Get(1).(int64), args.Error(2)
 }
 
+func (m *mockAssetRepository) DeleteAllAssets(ctx context.Context) error {
+	args := m.Called(ctx)
+	return args.Error(0)
+}
+
+func (m *mockAssetRepository) DeleteAllAssetsByUserUUID(ctx context.Context, userUUID string) error {
+	args := m.Called(ctx, userUUID)
+	return args.Error(0)
+}
+
 func TestAssetService_ListAssets_Defaults(t *testing.T) {
 	repo := new(mockAssetRepository)
 	service := NewAssetService(repo)

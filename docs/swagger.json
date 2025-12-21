@@ -149,6 +149,30 @@
                         }
                     }
                 }
+            },
+            "delete": {
+                "description": "Soft deletes all assets by setting is_deleted to true",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "assets"
+                ],
+                "summary": "Delete all assets",
+                "responses": {
+                    "200": {
+                        "description": "All assets deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
             }
         },
         "/assets/{id}": {
@@ -567,6 +591,30 @@
                     },
                     "400": {
                         "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Soft deletes all startups by setting is_deleted to true",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "startups"
+                ],
+                "summary": "Delete all startups",
+                "responses": {
+                    "200": {
+                        "description": "All startups deleted successfully",
                         "schema": {
                             "$ref": "#/definitions/response.APIResponse"
                         }
@@ -1328,6 +1376,47 @@
                                     }
                                 }
                             ]
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user UUID",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{uuid}/assets/delete-all": {
+            "delete": {
+                "description": "Soft deletes all assets for a specific user by setting is_deleted to true",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "assets"
+                ],
+                "summary": "Delete all assets by user UUID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User UUID",
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "All user assets deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
                         }
                     },
                     "400": {

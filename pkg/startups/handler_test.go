@@ -48,6 +48,11 @@ func (m *mockStartupService) ListStartups(ctx context.Context, page, limit int) 
 	return startups, args.Get(1).(int64), args.Error(2)
 }
 
+func (m *mockStartupService) DeleteAllStartups(ctx context.Context) error {
+	args := m.Called(ctx)
+	return args.Error(0)
+}
+
 func setupRouter(service StartupService) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()

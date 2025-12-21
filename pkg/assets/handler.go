@@ -30,9 +30,11 @@ func (h *AssetHandler) RegisterRoutes(router *gin.Engine) {
 	router.POST("/assets", h.createAsset)
 	router.PUT("/assets/:id", h.updateAsset)
 	router.DELETE("/assets/:id", h.deleteAsset)
+	router.DELETE("/assets", h.deleteAllAssets)
 	router.GET("/assets", h.listAssets)
 	router.GET("/assets/:id", h.getAssetByID)
 	router.GET("/users/:uuid/assets", h.listAssetsByUser)
+	router.DELETE("/users/:uuid/assets/delete-all", h.deleteAllAssetsByUserUUID)
 }
 
 type createAssetRequest struct {
@@ -317,4 +319,44 @@ func (h *AssetHandler) listAssetsByUser(c *gin.Context) {
 
 	data := AssetList{Items: assetsList, Total: total, Page: page, Limit: limit}
 	response.SendAPIResponse(c, http.StatusOK, true, "startup assets listed", data)
+}
+
+// @Summary      Delete all assets
+// @Description  Soft deletes all assets by setting is_deleted to true
+// @Tags         assets
+// @Produce      json
+// @Success      200  {object}  response.APIResponse "All assets deleted successfully"
+// @Failure      500  {object}  response.APIResponse "Internal server error"
+// @Router       /assets [delete]
+func (h *AssetHandler) deleteAllAssets(c *gin.Context) {
+	if err := h.service.DeleteAllAssets(c.Request.Context()); err != nil {
+		response.SendAPIResponse(c, http.StatusInternalServerError, false, err.Error(), nil)
+		return
+	}
+
+	response.SendAPIResponse(c, http.StatusOK, true, "all assets deleted", nil)
+}
+
+// @Summary      Delete all assets by user UUID
+// @Description  Soft deletes all assets for a specific user by setting is_deleted to true
+// @Tags         assets
+// @Produce      json
+// @Param        uuid   path      string  true  "User UUID"
+// @Success      200  {object}  response.APIResponse "All user assets deleted successfully"
+// @Failure      400  {object}  response.APIResponse "Invalid user UUID"
+// @Failure      500  {object}  response.APIResponse "Internal server error"
+// @Router       /users/{uuid}/assets/delete-all [delete]
+func (h *AssetHandler) deleteAllAssetsByUserUUID(c *gin.Context) {
+	userUUID := c.Param("uuid")
+	if userUUID == "" {
+		response.SendAPIResponse(c, http.StatusBadRequest, false, "user uuid required", nil)
+		return
+	}
+
+	if err := h.service.DeleteAllAssetsByUserUUID(c.Request.Context(), userUUID); err != nil {
+		response.SendAPIResponse(c, http.StatusInternalServerError, false, err.Error(), nil)
+		return
+	}
+
+	response.SendAPIResponse(c, http.StatusOK, true, "all user assets deleted", nil)
 }

@@ -6,6 +6,8 @@ type AssetService interface {
 	CreateAsset(ctx context.Context, input Asset) (Asset, error)
 	UpdateAsset(ctx context.Context, input Asset) (Asset, error)
 	DeleteAsset(ctx context.Context, id int64) error
+	DeleteAllAssets(ctx context.Context) error
+	DeleteAllAssetsByUserUUID(ctx context.Context, userUUID string) error
 	GetAssetByID(ctx context.Context, id int64) (Asset, error)
 	ListAssets(ctx context.Context, filters AssetFilters, page, limit int) ([]Asset, int64, error)
 	ListAssetsByUser(ctx context.Context, userUUID string, page, limit int) ([]Asset, int64, error)
@@ -55,4 +57,12 @@ func (s *assetService) ListAssetsByUser(ctx context.Context, userUUID string, pa
 	}
 	offset := (page - 1) * limit
 	return s.repo.ListAssetsByUser(ctx, userUUID, limit, offset)
+}
+
+func (s *assetService) DeleteAllAssets(ctx context.Context) error {
+	return s.repo.DeleteAllAssets(ctx)
+}
+
+func (s *assetService) DeleteAllAssetsByUserUUID(ctx context.Context, userUUID string) error {
+	return s.repo.DeleteAllAssetsByUserUUID(ctx, userUUID)
 }
