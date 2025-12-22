@@ -3,6 +3,7 @@ package users
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"grveyard/pkg/response"
 
@@ -193,11 +194,14 @@ func (h *UserHandler) checkVerification(c *gin.Context) {
 		c.JSON(http.StatusOK, false)
 		return
 	}
-	_, within, err := h.service.VerifyEmail(c.Request.Context(), req.Email)
-	if err != nil {
+
+	u, err := h.service.GetUserByEmail(c.Request.Context(), req.Email)
+	if err != nil || u.VerifiedAt == nil {
 		c.JSON(http.StatusOK, false)
 		return
 	}
+
+	within := time.Since(*u.VerifiedAt) <= 30*24*time.Hour
 	c.JSON(http.StatusOK, within)
 }
 

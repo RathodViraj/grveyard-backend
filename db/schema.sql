@@ -1,6 +1,3 @@
-DROP SCHEMA public CASCADE;
-CREATE SCHEMA public;
-
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
@@ -10,6 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
     profile_pic_url TEXT,
     uuid TEXT UNIQUE NOT NULL,
     verified_at TIMESTAMP NULL,
+    last_active_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
@@ -62,53 +60,45 @@ CREATE INDEX IF NOT EXISTS idx_assets_is_sold ON assets(is_sold);
 CREATE INDEX IF NOT EXISTS idx_assets_is_active ON assets(is_active);
 CREATE INDEX IF NOT EXISTS idx_assets_is_deleted ON assets(is_deleted);
 
-
-CREATE TABLE IF NOT EXISTS chats (
-    id SERIAL PRIMARY KEY,
-    buyer_id INT NOT NULL,
-    startup_id INT NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-
-    CONSTRAINT fk_chats_buyer
-        FOREIGN KEY (buyer_id)
-        REFERENCES users(id)
-        ON DELETE CASCADE,
-
-    CONSTRAINT fk_chats_startup
-        FOREIGN KEY (startup_id)
-        REFERENCES startups(id)
-        ON DELETE CASCADE,
-
-    CONSTRAINT unique_chat UNIQUE (buyer_id, startup_id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_chats_buyer_id ON chats(buyer_id);
-CREATE INDEX IF NOT EXISTS idx_chats_startup_id ON chats(startup_id);
-
 CREATE TABLE IF NOT EXISTS messages (
-    id SERIAL PRIMARY KEY,
-    chat_id INT NOT NULL,
-    sender_id INT NOT NULL,
-    content TEXT NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    id BIGSERIAL PRIMARY KEY,
 
-    CONSTRAINT fk_messages_chat
-        FOREIGN KEY (chat_id)
-        REFERENCES chats(id)
-        ON DELETE CASCADE,
+    sender_id INT NOT NULL,
+    receiver_id INT NOT NULL,
+
+    content TEXT NOT NULL,
+
+    message_type SMALLINT NOT NULL DEFAULT 0,
+    -- 0 = text
+    -- 1 = image
+    -- 2 = file
+    -- 3 = system (optional)
+
+    is_read BOOLEAN NOT NULL DEFAULT FALSE,
+
+    messaged_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT,
 
     CONSTRAINT fk_messages_sender
         FOREIGN KEY (sender_id)
         REFERENCES users(id)
-        ON DELETE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_messages_receiver
+        FOREIGN KEY (receiver_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT chk_not_self_message
+        CHECK (sender_id <> receiver_id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_messages_chat_id ON messages(chat_id);
-CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at);
+-- CREATE INDEX IF NOT EXISTS idx_messages_pair
+-- ON messages (
+--     LEAST(sender_id, receiver_id),
+--     GREATEST(sender_id, receiver_id),
+--     messaged_at
+-- );
 
--- =========================
--- OPTIONAL: TRANSACTIONS (future, but useful)
--- =========================
 CREATE TABLE IF NOT EXISTS transactions (
     id SERIAL PRIMARY KEY,
     asset_id INT NOT NULL,
@@ -125,9 +115,6 @@ CREATE TABLE IF NOT EXISTS transactions (
         REFERENCES users(id)
 );
 
--- =========================
--- OTP TABLE
--- =========================
 CREATE TABLE IF NOT EXISTS otps (
     id SERIAL PRIMARY KEY,
     email TEXT NOT NULL,
