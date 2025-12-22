@@ -1077,7 +1077,11 @@ paths:
           description: OK
           schema:
             type: boolean
-      summary: Check verification (boolean only)
+        "401":
+          description: Unauthorized
+          schema:
+            type: boolean
+      summary: Check and update verification (boolean only)
       tags:
       - users
   /users/login:
@@ -1116,44 +1120,6 @@ paths:
           schema:
             $ref: '#/definitions/response.APIResponse'
       summary: Login user (verify password)
-      tags:
-      - users
-  /users/verify:
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: Verification check request
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/users.verifyEmailRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.APIResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/users.User'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.APIResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/response.APIResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/response.APIResponse'
-      summary: Verify user by email (30-day window)
       tags:
       - users
   /verifyOTP:

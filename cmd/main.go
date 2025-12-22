@@ -41,7 +41,7 @@ func main() {
 		log.Println("No .env file found, using environment variables")
 	}
 
-	pool := db.Connect()
+	pool := db.ConnectToLocal()
 	defer pool.Close()
 
 	emailService := sendemail.NewEmailService()
@@ -63,8 +63,17 @@ func main() {
 	usersHandler := users.NewUserHandler(usersService)
 
 	otpRepo := otp.NewPostgresOTPRepository(pool)
-	otpService := otp.NewOTPService(otpRepo, emailService)
+	otpService := otp.NewOTPService(otpRepo, usersRepo, emailService)
 	otpHandler := otp.NewOTPHandler(otpService)
+
+	/*
+		// Chat setup
+		chatManager := chat.NewConnectionManager()
+		chatHandler := chat.NewHandler(chatManager)
+		// Inject message repository for persistence
+		msgRepo := chat.NewPostgresMessageRepository(pool)
+		chatHandler.SetRepository(msgRepo)
+	*/
 
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery())
@@ -107,6 +116,40 @@ func main() {
 	usersHandler.RegisterRoutes(router)
 	otpHandler.RegisterRoutes(router)
 
+	/*
+		// WebSocket chat endpoint (uses UUID for user_id)
+		router.GET("/ws/chat", func(c *gin.Context) {
+			uid := c.Query("user_id")
+			if _, err := uuid.Parse(uid); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user_id, must be UUID"})
+				return
+			}
+
+			// Inject user_id into request context for the chat handler
+			ctx := context.WithValue(c.Request.Context(), "user_id", uid)
+			req := c.Request.WithContext(ctx)
+			chatHandler.HandleWebSocket(c.Writer, req)
+		})
+
+		// Status endpoint for online users (proxy to handler)
+		router.GET("/chat/status", func(c *gin.Context) {
+			chatHandler.GetStatusGin(c)
+		})
+
+		router.GET("/messages", func(c *gin.Context) {
+			uid := c.Query("user_id")
+			if _, err := uuid.Parse(uid); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user_id, must be UUID"})
+				return
+			}
+
+			// Inject authenticated user_id into context for handler validation
+			ctx := context.WithValue(c.Request.Context(), "user_id", uid)
+			c.Request = c.Request.WithContext(ctx)
+
+			chatHandler.GetMessagesGin(c)
+		})
+	*/
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	port := os.Getenv("SERVER_PORT")

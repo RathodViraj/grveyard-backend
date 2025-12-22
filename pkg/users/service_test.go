@@ -191,7 +191,7 @@ func TestUserService_Login_Success(t *testing.T) {
 	repo.AssertExpectations(t)
 }
 
-func TestUserService_VerifyEmail_SetsTimestamp(t *testing.T) {
+func TestUserService_CheckAndUpdateVerification_OutsideWindow(t *testing.T) {
 	repo := new(mockUserRepository)
 	service := NewUserService(repo)
 
@@ -199,18 +199,16 @@ func TestUserService_VerifyEmail_SetsTimestamp(t *testing.T) {
 	user := User{Email: "a@example.com", VerifiedAt: &now}
 
 	repo.On("GetUserByEmail", mock.Anything, "a@example.com").Return(user, nil)
-	repo.On("UpdateVerifiedAtByEmail", mock.Anything, "a@example.com", mock.Anything).Return(nil)
-	repo.On("GetUserByEmail", mock.Anything, "a@example.com").Return(user, nil)
 
-	result, within, err := service.VerifyEmail(context.Background(), "a@example.com")
+	verified, err := service.CheckAndUpdateVerification(context.Background(), "a@example.com")
 
 	require.NoError(t, err)
-	require.False(t, within)
-	require.NotNil(t, result.VerifiedAt)
+	require.False(t, verified)
+	repo.AssertNotCalled(t, "UpdateVerifiedAtByEmail", mock.Anything, mock.Anything, mock.Anything)
 	repo.AssertExpectations(t)
 }
 
-func TestUserService_VerifyEmail_WithinWindow(t *testing.T) {
+func TestUserService_CheckAndUpdateVerification_WithinWindow(t *testing.T) {
 	repo := new(mockUserRepository)
 	service := NewUserService(repo)
 
@@ -219,9 +217,8 @@ func TestUserService_VerifyEmail_WithinWindow(t *testing.T) {
 
 	repo.On("GetUserByEmail", mock.Anything, "a@example.com").Return(user, nil)
 	repo.On("UpdateVerifiedAtByEmail", mock.Anything, "a@example.com", mock.Anything).Return(nil)
-	repo.On("GetUserByEmail", mock.Anything, "a@example.com").Return(user, nil)
 
-	_, within, err := service.VerifyEmail(context.Background(), "a@example.com")
+	within, err := service.CheckAndUpdateVerification(context.Background(), "a@example.com")
 
 	require.NoError(t, err)
 	require.True(t, within)

@@ -3,7 +3,6 @@ package users
 import (
 	"net/http"
 	"strconv"
-	"time"
 
 	"grveyard/pkg/response"
 
@@ -21,7 +20,6 @@ func NewUserHandler(service UserService) *UserHandler {
 func (h *UserHandler) RegisterRoutes(router *gin.Engine) {
 	router.POST("/users", h.createUser)
 	router.POST("/users/login", h.login)
-	router.POST("/users/verify", h.verifyUser) // legacy
 	router.POST("/users/checkVerification", h.checkVerification)
 	router.PUT("/users/:uuid", h.updateUser)
 	router.DELETE("/users/:uuid", h.deleteUser)
@@ -145,64 +143,34 @@ func (h *UserHandler) deleteUser(c *gin.Context) {
 	response.SendAPIResponse(c, http.StatusOK, true, "user deleted", nil)
 }
 
-// @Summary      Verify user by email (30-day window)
+// checkVerification checks if user is verified within 30 days and updates verification timestamp.
+// Returns strictly true if verified and within window (and updates timestamp), false otherwise.
+// @Summary      Check and update verification (boolean only)
 // @Tags         users
 // @Accept       json
 // @Produce      json
 // @Param        request body verifyEmailRequest true "Verification check request"
-// @Success      200 {object} response.APIResponse{data=User}
-// @Failure      401 {object} response.APIResponse
-// @Failure      400 {object} response.APIResponse
-// @Failure      404 {object} response.APIResponse
-// @Router       /users/verify [post]
-func (h *UserHandler) verifyUser(c *gin.Context) {
-	var req verifyEmailRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.SendAPIResponse(c, http.StatusBadRequest, false, "invalid request payload", nil)
-		return
-	}
-
-	u, within, err := h.service.VerifyEmail(c.Request.Context(), req.Email)
-	if err != nil {
-		if err == ErrUserNotFound {
-			response.SendAPIResponse(c, http.StatusUnauthorized, false, "user not verified", nil)
-			return
-		}
-		response.SendAPIResponse(c, http.StatusBadRequest, false, err.Error(), nil)
-		return
-	}
-
-	if !within {
-		response.SendAPIResponse(c, http.StatusUnauthorized, false, "user not verified", nil)
-		return
-	}
-
-	response.SendAPIResponse(c, http.StatusOK, true, "user verified", u)
-}
-
-// checkVerification returns a strict boolean without APIResponse wrapper.
-// @Summary      Check verification (boolean only)
-// @Tags         users
-// @Accept       json
-// @Produce      json
-// @Param        request body verifyEmailRequest true "Verification check request"
-// @Success      200 {boolean} boolean
+// @Success      200 {boolean} true
+// @Failure      401 {boolean} false
 // @Router       /users/checkVerification [post]
 func (h *UserHandler) checkVerification(c *gin.Context) {
 	var req verifyEmailRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusOK, false)
+		c.JSON(http.StatusUnauthorized, false)
 		return
 	}
 
-	u, err := h.service.GetUserByEmail(c.Request.Context(), req.Email)
-	if err != nil || u.VerifiedAt == nil {
-		c.JSON(http.StatusOK, false)
+	verified, err := h.service.CheckAndUpdateVerification(c.Request.Context(), req.Email)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, false)
 		return
 	}
 
-	within := time.Since(*u.VerifiedAt) <= 30*24*time.Hour
-	c.JSON(http.StatusOK, within)
+	if verified {
+		c.JSON(http.StatusOK, true)
+	} else {
+		c.JSON(http.StatusUnauthorized, false)
+	}
 }
 
 // @Summary      Get user by UUID

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	sendemail "grveyard/pkg/sendemail"
+	"grveyard/pkg/users"
 	"math/rand"
 	"time"
 )
@@ -15,12 +16,13 @@ type OTPService interface {
 }
 
 type otpService struct {
-	repo OTPRepository
-	es   sendemail.EmailService
+	repo     OTPRepository
+	userRepo users.UserRepository
+	es       sendemail.EmailService
 }
 
-func NewOTPService(repo OTPRepository, es sendemail.EmailService) OTPService {
-	return &otpService{repo: repo, es: es}
+func NewOTPService(repo OTPRepository, userRepo users.UserRepository, es sendemail.EmailService) OTPService {
+	return &otpService{repo: repo, userRepo: userRepo, es: es}
 }
 
 func (s *otpService) GenerateAndSendOTP(ctx context.Context, email string) error {
@@ -58,6 +60,11 @@ func (s *otpService) VerifyOTP(ctx context.Context, email, code string) (bool, e
 
 	if err := s.repo.MarkOTPAsVerified(ctx, otp.ID); err != nil {
 		return false, fmt.Errorf("failed to mark OTP as verified: %w", err)
+	}
+
+	now := time.Now()
+	if err := s.userRepo.UpdateVerifiedAtByEmail(ctx, email, now); err != nil {
+		return false, fmt.Errorf("failed to update user verification: %w", err)
 	}
 
 	return true, nil

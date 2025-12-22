@@ -20,7 +20,7 @@ type UserService interface {
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	ListUsers(ctx context.Context, page, limit int) ([]User, int64, error)
 	Login(ctx context.Context, email, password string) (User, error)
-	VerifyEmail(ctx context.Context, email string) (User, bool, error)
+	CheckAndUpdateVerification(ctx context.Context, email string) (bool, error)
 }
 
 type userService struct {
@@ -113,10 +113,10 @@ func (s *userService) Login(ctx context.Context, email, password string) (User, 
 	return s.repo.GetUserByID(ctx, id)
 }
 
-func (s *userService) VerifyEmail(ctx context.Context, email string) (User, bool, error) {
+func (s *userService) CheckAndUpdateVerification(ctx context.Context, email string) (bool, error) {
 	u, err := s.repo.GetUserByEmail(ctx, email)
 	if err != nil {
-		return User{}, false, err
+		return false, err
 	}
 
 	now := time.Now()
@@ -127,10 +127,11 @@ func (s *userService) VerifyEmail(ctx context.Context, email string) (User, bool
 		}
 	}
 
-	if err := s.repo.UpdateVerifiedAtByEmail(ctx, email, now); err != nil {
-		return User{}, false, err
+	if within {
+		if err := s.repo.UpdateVerifiedAtByEmail(ctx, email, now); err != nil {
+			return false, err
+		}
 	}
-	u.VerifiedAt = &now
 
-	return u, within, nil
+	return within, nil
 }

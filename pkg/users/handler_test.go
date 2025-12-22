@@ -79,10 +79,9 @@ func (m *mockUserService) Login(ctx context.Context, email, password string) (Us
 	return user, args.Error(1)
 }
 
-func (m *mockUserService) VerifyEmail(ctx context.Context, email string) (User, bool, error) {
+func (m *mockUserService) CheckAndUpdateVerification(ctx context.Context, email string) (bool, error) {
 	args := m.Called(ctx, email)
-	user, _ := args.Get(0).(User)
-	return user, args.Bool(1), args.Error(2)
+	return args.Bool(0), args.Error(1)
 }
 
 func setupUserRouter(service UserService) *gin.Engine {
@@ -262,52 +261,11 @@ func TestUserHandler_ListUsers_Success(t *testing.T) {
 	svc.AssertExpectations(t)
 }
 
-func TestUserHandler_VerifyUser_SuccessWithinWindow(t *testing.T) {
+func TestUserHandler_CheckVerification_Verified(t *testing.T) {
 	svc := new(mockUserService)
 	r := setupUserRouter(svc)
 
-	svc.On("VerifyEmail", mock.Anything, "a@example.com").Return(User{Email: "a@example.com"}, true, nil)
-
-	req := httptest.NewRequest(http.MethodPost, "/users/verify", strings.NewReader(`{"email":"a@example.com"}`))
-	req.Header.Set("Content-Type", "application/json")
-	w := httptest.NewRecorder()
-
-	r.ServeHTTP(w, req)
-
-	require.Equal(t, http.StatusOK, w.Code)
-	var resp response.APIResponse
-	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
-	require.True(t, resp.Success)
-	require.Equal(t, "user verified", resp.Message)
-	svc.AssertExpectations(t)
-}
-
-func TestUserHandler_VerifyUser_NotVerified(t *testing.T) {
-	svc := new(mockUserService)
-	r := setupUserRouter(svc)
-
-	svc.On("VerifyEmail", mock.Anything, "a@example.com").Return(User{}, false, nil)
-
-	req := httptest.NewRequest(http.MethodPost, "/users/verify", strings.NewReader(`{"email":"a@example.com"}`))
-	req.Header.Set("Content-Type", "application/json")
-	w := httptest.NewRecorder()
-
-	r.ServeHTTP(w, req)
-
-	require.Equal(t, http.StatusUnauthorized, w.Code)
-	var resp response.APIResponse
-	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
-	require.False(t, resp.Success)
-	require.Equal(t, "user not verified", resp.Message)
-	svc.AssertExpectations(t)
-}
-
-func TestUserHandler_CheckVerification_Boolean(t *testing.T) {
-	svc := new(mockUserService)
-	r := setupUserRouter(svc)
-
-	now := time.Now()
-	svc.On("GetUserByEmail", mock.Anything, "a@example.com").Return(User{VerifiedAt: &now}, nil)
+	svc.On("CheckAndUpdateVerification", mock.Anything, "a@example.com").Return(true, nil)
 
 	req := httptest.NewRequest(http.MethodPost, "/users/checkVerification", strings.NewReader(`{"email":"a@example.com"}`))
 	req.Header.Set("Content-Type", "application/json")
@@ -317,16 +275,14 @@ func TestUserHandler_CheckVerification_Boolean(t *testing.T) {
 
 	require.Equal(t, http.StatusOK, w.Code)
 	require.Equal(t, "true", strings.TrimSpace(w.Body.String()))
-
-	svc.AssertNotCalled(t, "VerifyEmail", mock.Anything, mock.Anything)
 	svc.AssertExpectations(t)
 }
 
-func TestUserHandler_CheckVerification_Unverified(t *testing.T) {
+func TestUserHandler_CheckVerification_NotVerified(t *testing.T) {
 	svc := new(mockUserService)
 	r := setupUserRouter(svc)
 
-	svc.On("GetUserByEmail", mock.Anything, "a@example.com").Return(User{}, nil)
+	svc.On("CheckAndUpdateVerification", mock.Anything, "a@example.com").Return(false, nil)
 
 	req := httptest.NewRequest(http.MethodPost, "/users/checkVerification", strings.NewReader(`{"email":"a@example.com"}`))
 	req.Header.Set("Content-Type", "application/json")
@@ -334,9 +290,7 @@ func TestUserHandler_CheckVerification_Unverified(t *testing.T) {
 
 	r.ServeHTTP(w, req)
 
-	require.Equal(t, http.StatusOK, w.Code)
+	require.Equal(t, http.StatusUnauthorized, w.Code)
 	require.Equal(t, "false", strings.TrimSpace(w.Body.String()))
-
-	svc.AssertNotCalled(t, "VerifyEmail", mock.Anything, mock.Anything)
 	svc.AssertExpectations(t)
 }
