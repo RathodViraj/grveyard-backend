@@ -26,11 +26,20 @@ func NewOTPService(repo OTPRepository, userRepo users.UserRepository, es sendema
 }
 
 func (s *otpService) GenerateAndSendOTP(ctx context.Context, email string) error {
+	count, err := s.repo.CountOTPsInLastHour(ctx, email)
+	if err != nil {
+		return fmt.Errorf("failed to check OTP count: %w", err)
+	}
+
+	if count >= 3 {
+		return errors.New("too many OTP requests. Please try again later")
+	}
+
 	code := generateOTP(6)
 
 	expiresAt := time.Now().Add(10 * time.Minute)
 
-	_, err := s.repo.CreateOTP(ctx, email, code, expiresAt)
+	_, err = s.repo.CreateOTP(ctx, email, code, expiresAt)
 	if err != nil {
 		return fmt.Errorf("failed to create OTP: %w", err)
 	}

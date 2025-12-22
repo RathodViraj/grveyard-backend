@@ -242,13 +242,6 @@ definitions:
     required:
     - name
     type: object
-  users.verifyEmailRequest:
-    properties:
-      email:
-        type: string
-    required:
-    - email
-    type: object
 host: grveyard-backend.onrender.com
 info:
   contact:
@@ -557,6 +550,10 @@ paths:
             $ref: '#/definitions/response.APIResponse'
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "429":
+          description: Too Many Requests
           schema:
             $ref: '#/definitions/response.APIResponse'
         "500":
@@ -1060,16 +1057,13 @@ paths:
       tags:
       - assets
   /users/checkVerification:
-    post:
-      consumes:
-      - application/json
+    get:
       parameters:
-      - description: Verification check request
-        in: body
-        name: request
+      - description: User email
+        in: query
+        name: email
         required: true
-        schema:
-          $ref: '#/definitions/users.verifyEmailRequest'
+        type: string
       produces:
       - application/json
       responses:

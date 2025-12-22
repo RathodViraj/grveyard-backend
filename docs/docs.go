@@ -487,6 +487,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/response.APIResponse"
                         }
                     },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -1012,10 +1018,7 @@ const docTemplate = `{
             }
         },
         "/users/checkVerification": {
-            "post": {
-                "consumes": [
-                    "application/json"
-                ],
+            "get": {
                 "produces": [
                     "application/json"
                 ],
@@ -1025,13 +1028,11 @@ const docTemplate = `{
                 "summary": "Check and update verification (boolean only)",
                 "parameters": [
                     {
-                        "description": "Verification check request",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/users.verifyEmailRequest"
-                        }
+                        "type": "string",
+                        "description": "User email",
+                        "name": "email",
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -1789,17 +1790,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "uuid": {
-                    "type": "string"
-                }
-            }
-        },
-        "users.verifyEmailRequest": {
-            "type": "object",
-            "required": [
-                "email"
-            ],
-            "properties": {
-                "email": {
                     "type": "string"
                 }
             }

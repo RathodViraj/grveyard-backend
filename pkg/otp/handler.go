@@ -38,6 +38,7 @@ type verifyOTPRequest struct {
 // @Param        request body getOTPRequest true "Email to send OTP to"
 // @Success      200 {object} response.APIResponse
 // @Failure      400 {object} response.APIResponse
+// @Failure      429 {object} response.APIResponse
 // @Failure      500 {object} response.APIResponse
 // @Router       /getOTP [post]
 func (h *OTPHandler) getOTP(c *gin.Context) {
@@ -48,6 +49,10 @@ func (h *OTPHandler) getOTP(c *gin.Context) {
 	}
 
 	if err := h.service.GenerateAndSendOTP(c.Request.Context(), req.Email); err != nil {
+		if err.Error() == "too many OTP requests. Please try again later" {
+			response.SendAPIResponse(c, http.StatusTooManyRequests, false, err.Error(), nil)
+			return
+		}
 		response.SendAPIResponse(c, http.StatusInternalServerError, false, "Failed to generate and send OTP: "+err.Error(), nil)
 		return
 	}

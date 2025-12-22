@@ -267,8 +267,7 @@ func TestUserHandler_CheckVerification_Verified(t *testing.T) {
 
 	svc.On("CheckAndUpdateVerification", mock.Anything, "a@example.com").Return(true, nil)
 
-	req := httptest.NewRequest(http.MethodPost, "/users/checkVerification", strings.NewReader(`{"email":"a@example.com"}`))
-	req.Header.Set("Content-Type", "application/json")
+	req := httptest.NewRequest(http.MethodGet, "/users/checkVerification?email=a@example.com", nil)
 	w := httptest.NewRecorder()
 
 	r.ServeHTTP(w, req)
@@ -284,8 +283,7 @@ func TestUserHandler_CheckVerification_NotVerified(t *testing.T) {
 
 	svc.On("CheckAndUpdateVerification", mock.Anything, "a@example.com").Return(false, nil)
 
-	req := httptest.NewRequest(http.MethodPost, "/users/checkVerification", strings.NewReader(`{"email":"a@example.com"}`))
-	req.Header.Set("Content-Type", "application/json")
+	req := httptest.NewRequest(http.MethodGet, "/users/checkVerification?email=a@example.com", nil)
 	w := httptest.NewRecorder()
 
 	r.ServeHTTP(w, req)

@@ -12,6 +12,7 @@ type OTPRepository interface {
 	GetOTPByEmail(ctx context.Context, email string) (OTP, error)
 	MarkOTPAsVerified(ctx context.Context, id int64) error
 	DeleteExpiredOTPs(ctx context.Context) error
+	CountOTPsInLastHour(ctx context.Context, email string) (int, error)
 }
 
 type postgresOTPRepository struct {
@@ -72,4 +73,16 @@ func (r *postgresOTPRepository) DeleteExpiredOTPs(ctx context.Context) error {
 	query := `DELETE FROM otps WHERE expires_at < NOW()`
 	_, err := r.pool.Exec(ctx, query)
 	return err
+}
+
+func (r *postgresOTPRepository) CountOTPsInLastHour(ctx context.Context, email string) (int, error) {
+	query := `
+		SELECT COUNT(*)
+		FROM otps
+		WHERE email = $1 AND created_at > NOW() - INTERVAL '1 hour'
+	`
+
+	var count int
+	err := r.pool.QueryRow(ctx, query, email).Scan(&count)
+	return count, err
 }

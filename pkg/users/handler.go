@@ -20,7 +20,7 @@ func NewUserHandler(service UserService) *UserHandler {
 func (h *UserHandler) RegisterRoutes(router *gin.Engine) {
 	router.POST("/users", h.createUser)
 	router.POST("/users/login", h.login)
-	router.POST("/users/checkVerification", h.checkVerification)
+	router.GET("/users/checkVerification", h.checkVerification)
 	router.PUT("/users/:uuid", h.updateUser)
 	router.DELETE("/users/:uuid", h.deleteUser)
 	router.GET("/users", h.listUsers)
@@ -147,20 +147,19 @@ func (h *UserHandler) deleteUser(c *gin.Context) {
 // Returns strictly true if verified and within window (and updates timestamp), false otherwise.
 // @Summary      Check and update verification (boolean only)
 // @Tags         users
-// @Accept       json
 // @Produce      json
-// @Param        request body verifyEmailRequest true "Verification check request"
+// @Param        email query string true "User email"
 // @Success      200 {boolean} true
 // @Failure      401 {boolean} false
-// @Router       /users/checkVerification [post]
+// @Router       /users/checkVerification [get]
 func (h *UserHandler) checkVerification(c *gin.Context) {
-	var req verifyEmailRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	email := c.Query("email")
+	if email == "" {
 		c.JSON(http.StatusUnauthorized, false)
 		return
 	}
 
-	verified, err := h.service.CheckAndUpdateVerification(c.Request.Context(), req.Email)
+	verified, err := h.service.CheckAndUpdateVerification(c.Request.Context(), email)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, false)
 		return
