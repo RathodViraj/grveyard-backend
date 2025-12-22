@@ -40,8 +40,8 @@ func NewPostgresUserRepository(pool *pgxpool.Pool) UserRepository {
 
 func (r *postgresUserRepository) CreateUser(ctx context.Context, name, email, role, passwordHash, profilePicURL, uuid string) (User, error) {
 	query := `INSERT INTO users (name, email, role, password_hash, profile_pic_url, uuid, created_at)
-              VALUES ($1, $2, $3, $4, $5, $6, NOW())
-              RETURNING id, name, email, role, profile_pic_url, uuid, verified_at, created_at`
+	          VALUES ($1, $2, $3, $4, $5, $6, NOW())
+	          RETURNING id, name, email, role, COALESCE(profile_pic_url, '') AS profile_pic_url, uuid, verified_at, created_at`
 	row := r.pool.QueryRow(ctx, query, name, email, role, passwordHash, profilePicURL, uuid)
 
 	var u User
@@ -53,9 +53,9 @@ func (r *postgresUserRepository) CreateUser(ctx context.Context, name, email, ro
 
 func (r *postgresUserRepository) UpdateUser(ctx context.Context, u User) (User, error) {
 	query := `UPDATE users
-              SET name = $1, role = $2, profile_pic_url = $3, uuid = $4
-              WHERE id = $5 AND is_deleted = false
-              RETURNING id, name, email, role, profile_pic_url, uuid, verified_at, created_at`
+	          SET name = $1, role = $2, profile_pic_url = $3, uuid = $4
+	          WHERE id = $5 AND is_deleted = false
+	          RETURNING id, name, email, role, COALESCE(profile_pic_url, '') AS profile_pic_url, uuid, verified_at, created_at`
 	row := r.pool.QueryRow(ctx, query, u.Name, u.Role, u.ProfilePicURL, u.UUID, u.ID)
 
 	var out User
@@ -72,7 +72,7 @@ func (r *postgresUserRepository) UpdateUserByUUID(ctx context.Context, currentUU
 	query := `UPDATE users
 			  SET name = $1, role = $2, profile_pic_url = $3, uuid = $4
 			  WHERE uuid = $5 AND is_deleted = false
-              RETURNING id, name, email, role, profile_pic_url, uuid, verified_at, created_at`
+	          RETURNING id, name, email, role, COALESCE(profile_pic_url, '') AS profile_pic_url, uuid, verified_at, created_at`
 	row := r.pool.QueryRow(ctx, query, u.Name, u.Role, u.ProfilePicURL, u.UUID, currentUUID)
 
 	var out User
@@ -108,7 +108,7 @@ func (r *postgresUserRepository) DeleteUserByUUID(ctx context.Context, uuid stri
 }
 
 func (r *postgresUserRepository) GetUserByEmailIncludingDeleted(ctx context.Context, email string) (User, error) {
-	query := `SELECT id, name, email, role, profile_pic_url, uuid, verified_at, created_at, is_deleted
+	query := `SELECT id, name, email, role, COALESCE(profile_pic_url, '') AS profile_pic_url, uuid, verified_at, created_at, is_deleted
 			  FROM users
 			  WHERE email = $1`
 	row := r.pool.QueryRow(ctx, query, email)
@@ -131,7 +131,7 @@ func (r *postgresUserRepository) ReviveUserByEmail(ctx context.Context, email, n
 	query := `UPDATE users
 			  SET name = $1, role = $2, password_hash = $3, profile_pic_url = $4, uuid = $5, is_deleted = false
 			  WHERE email = $6
-			  RETURNING id, name, email, role, profile_pic_url, uuid, verified_at, created_at`
+			  RETURNING id, name, email, role, COALESCE(profile_pic_url, '') AS profile_pic_url, uuid, verified_at, created_at`
 	row := r.pool.QueryRow(ctx, query, name, role, passwordHash, profilePicURL, uuid, email)
 
 	var u User
@@ -145,7 +145,7 @@ func (r *postgresUserRepository) ReviveUserByEmail(ctx context.Context, email, n
 }
 
 func (r *postgresUserRepository) GetUserByID(ctx context.Context, id int64) (User, error) {
-	query := `SELECT id, name, email, role, profile_pic_url, uuid, verified_at, created_at
+	query := `SELECT id, name, email, role, COALESCE(profile_pic_url, '') AS profile_pic_url, uuid, verified_at, created_at
               FROM users
               WHERE id = $1 AND is_deleted = false`
 	row := r.pool.QueryRow(ctx, query, id)
@@ -161,7 +161,7 @@ func (r *postgresUserRepository) GetUserByID(ctx context.Context, id int64) (Use
 }
 
 func (r *postgresUserRepository) GetUserByUUID(ctx context.Context, uuid string) (User, error) {
-	query := `SELECT id, name, email, role, profile_pic_url, uuid, verified_at, created_at
+	query := `SELECT id, name, email, role, COALESCE(profile_pic_url, '') AS profile_pic_url, uuid, verified_at, created_at
 			  FROM users
 			  WHERE uuid = $1 AND is_deleted = false`
 	row := r.pool.QueryRow(ctx, query, uuid)
@@ -177,7 +177,7 @@ func (r *postgresUserRepository) GetUserByUUID(ctx context.Context, uuid string)
 }
 
 func (r *postgresUserRepository) GetUserByEmail(ctx context.Context, email string) (User, error) {
-	query := `SELECT id, name, email, role, profile_pic_url, uuid, verified_at, created_at
+	query := `SELECT id, name, email, role, COALESCE(profile_pic_url, '') AS profile_pic_url, uuid, verified_at, created_at
 			  FROM users
 			  WHERE email = $1 AND is_deleted = false`
 	row := r.pool.QueryRow(ctx, query, email)
@@ -193,7 +193,7 @@ func (r *postgresUserRepository) GetUserByEmail(ctx context.Context, email strin
 }
 
 func (r *postgresUserRepository) ListUsers(ctx context.Context, limit, offset int) ([]User, int64, error) {
-	query := `SELECT id, name, email, role, profile_pic_url, uuid, verified_at, created_at
+	query := `SELECT id, name, email, role, COALESCE(profile_pic_url, '') AS profile_pic_url, uuid, verified_at, created_at
               FROM users
               WHERE is_deleted = false
               ORDER BY id

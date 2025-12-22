@@ -108,7 +108,7 @@ func TestPostgresUserRepository_DeleteUser(t *testing.T) {
 
 func TestPostgresUserRepository_ListUsers(t *testing.T) {
 	pool := setupUserTestPool(t)
-	// cleanUserTables(t, pool)
+	cleanUserTables(t, pool)
 
 	repo := NewPostgresUserRepository(pool)
 	ctx := context.Background()
