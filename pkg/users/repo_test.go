@@ -35,7 +35,7 @@ func cleanUserTables(t *testing.T, pool *pgxpool.Pool) {
 	t.Helper()
 
 	ctx := context.Background()
-	_, err := pool.Exec(ctx, "TRUNCATE TABLE messages, chats, assets, startups, users, otps RESTART IDENTITY CASCADE")
+	_, err := pool.Exec(ctx, "TRUNCATE TABLE messages, assets, startups, users, otps RESTART IDENTITY CASCADE")
 	require.NoError(t, err)
 }
 
@@ -108,7 +108,7 @@ func TestPostgresUserRepository_DeleteUser(t *testing.T) {
 
 func TestPostgresUserRepository_ListUsers(t *testing.T) {
 	pool := setupUserTestPool(t)
-	cleanUserTables(t, pool)
+	// cleanUserTables(t, pool)
 
 	repo := NewPostgresUserRepository(pool)
 	ctx := context.Background()
