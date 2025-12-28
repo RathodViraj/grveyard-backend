@@ -2,6 +2,7 @@ package chat
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -148,18 +149,18 @@ func TestMarkMessagesAsRead_OnlyReceiverCanAcknowledge(t *testing.T) {
 	receiver := testhelpers.CreateTestUser(t, pool)
 	other := testhelpers.CreateTestUser(t, pool)
 
-	_, err := store.SaveMessage(context.Background(), sender, receiver, "hello", 0, 123)
+	id1, err := store.SaveMessage(context.Background(), sender, receiver, "hello", 0, 123)
 	require.NoError(t, err)
-	_, err = store.SaveMessage(context.Background(), sender, receiver, "hello2", 0, 124)
+	id2, err := store.SaveMessage(context.Background(), sender, receiver, "hello2", 0, 124)
 	require.NoError(t, err)
 
 	// Attempt with non-receiver should not mark as read
-	updated, err := store.MarkMessagesAsRead(context.Background(), other, []string{"1", "2"})
+	updated, err := store.MarkMessagesAsRead(context.Background(), other, []string{fmt.Sprintf("%d", id1), fmt.Sprintf("%d", id2)})
 	require.NoError(t, err)
 	require.Empty(t, updated)
 
 	// Receiver marks as read
-	updated, err = store.MarkMessagesAsRead(context.Background(), receiver, []string{"1", "2"})
+	updated, err = store.MarkMessagesAsRead(context.Background(), receiver, []string{fmt.Sprintf("%d", id1), fmt.Sprintf("%d", id2)})
 	require.NoError(t, err)
 	require.NotEmpty(t, updated)
 

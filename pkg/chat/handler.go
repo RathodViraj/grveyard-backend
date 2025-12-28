@@ -207,6 +207,12 @@ func (h *Handler) processMessage(client *Client, msg Message) {
 	// Ensure sender_id matches authenticated user
 	msg.SenderID = client.UserID
 
+	// Prevent self-messages even after sender assignment
+	if msg.SenderID == msg.ReceiverID {
+		h.sendError(client, msg, "cannot send messages to yourself")
+		return
+	}
+
 	// Default message type if not provided
 	if msg.MessageType == 0 {
 		msg.MessageType = 0 // text
