@@ -92,12 +92,12 @@ CREATE TABLE IF NOT EXISTS messages (
         CHECK (sender_id <> receiver_id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_messages_pair
-ON messages (
-    LEAST(sender_id, receiver_id),
-    GREATEST(sender_id, receiver_id),
-    messaged_at
-);
+-- CREATE INDEX IF NOT EXISTS idx_messages_pair
+-- ON messages (
+--     LEAST(sender_id, receiver_id),
+--     GREATEST(sender_id, receiver_id),
+--     messaged_at
+-- );
 
 CREATE TABLE IF NOT EXISTS transactions (
     id SERIAL PRIMARY KEY,
