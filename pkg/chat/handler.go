@@ -83,10 +83,6 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 // HandleWebSocketGin validates user_id from query, injects into context, and upgrades to WebSocket.
 func (h *Handler) HandleWebSocketGin(c *gin.Context) {
 	uid := c.Query("user_id")
-	if _, err := uuid.Parse(uid); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user_id, must be UUID"})
-		return
-	}
 
 	ctx := context.WithValue(c.Request.Context(), "user_id", uid)
 	req := c.Request.WithContext(ctx)
@@ -380,10 +376,6 @@ func (h *Handler) GetMessagesGin(c *gin.Context) {
 	}
 
 	uid := c.Query("user_id")
-	if _, err := uuid.Parse(uid); err != nil {
-		response.SendAPIResponse(c, http.StatusBadRequest, false, "invalid user_id, must be UUID", nil)
-		return
-	}
 	ctx := context.WithValue(c.Request.Context(), "user_id", uid)
 	c.Request = c.Request.WithContext(ctx)
 
