@@ -33,12 +33,12 @@ func newTestPool(t *testing.T) *pgxpool.Pool {
 	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	require.NoError(t, err)
 
-	truncate := func() {
-		_, err := pool.Exec(context.Background(), "TRUNCATE messages, users RESTART IDENTITY CASCADE")
-		require.NoError(t, err)
-	}
-	truncate()
-	t.Cleanup(truncate)
+	// truncate := func() {
+	// 	_, err := pool.Exec(context.Background(), "TRUNCATE messages, users RESTART IDENTITY CASCADE")
+	// 	require.NoError(t, err)
+	// }
+	// truncate()
+	// t.Cleanup(truncate)
 	t.Cleanup(func() { pool.Close() })
 	return pool
 }
