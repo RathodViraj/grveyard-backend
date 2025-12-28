@@ -529,6 +529,19 @@ paths:
       summary: Unlist an asset
       tags:
       - buy
+  /chat/status:
+    get:
+      description: Returns list of currently connected users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Get online users
+      tags:
+      - chat
   /getOTP:
     post:
       consumes:
@@ -563,6 +576,54 @@ paths:
       summary: Generate and send OTP
       tags:
       - OTP
+  /messages:
+    get:
+      description: Fetch chat messages between the requesting user and a peer
+      parameters:
+      - description: Requesting user UUID
+        in: query
+        name: user_id
+        required: true
+        type: string
+      - description: Peer user UUID
+        in: query
+        name: peer_id
+        required: true
+        type: string
+      - description: Maximum messages to return (max 100)
+        in: query
+        name: limit
+        type: integer
+      - description: Epoch seconds cursor for pagination
+        in: query
+        name: before
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Get conversation history
+      tags:
+      - chat
   /startups:
     delete:
       description: Soft deletes all startups by setting is_deleted to true

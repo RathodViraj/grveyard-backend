@@ -1,5 +1,4 @@
 .env
 .env.local
-pkg/db/postgresSQL.local.go
+db/postgresSQL.local.go
 *.log
-pkg/chat
