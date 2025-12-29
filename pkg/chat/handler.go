@@ -23,6 +23,8 @@ type Handler struct {
 		Printf(string, ...interface{})
 	}
 	repo MessageStore // optional; if nil, persistence is skipped
+	// Upgrader abstracts Gorilla's websocket.Upgrader to allow mocking in tests
+	upgrader WebSocketUpgrader
 }
 
 // NewHandler creates a new chat handler
@@ -30,6 +32,14 @@ func NewHandler(manager *ConnectionManager) *Handler {
 	return &Handler{
 		manager: manager,
 		logger:  log.New(log.Writer(), "[chat] ", log.LstdFlags),
+		upgrader: &websocket.Upgrader{
+			ReadBufferSize:  1024,
+			WriteBufferSize: 1024,
+			CheckOrigin: func(r *http.Request) bool {
+				// In production, validate origin properly
+				return true
+			},
+		},
 	}
 }
 
@@ -38,13 +48,23 @@ func (h *Handler) SetRepository(r MessageStore) {
 	h.repo = r
 }
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		// In production, validate origin properly
-		return true
-	},
+// WebSocketUpgrader defines the interface for upgrading HTTP requests to WebSocket connections.
+// The real implementation is *websocket.Upgrader, but tests can provide a mock.
+type WebSocketUpgrader interface {
+	Upgrade(w http.ResponseWriter, r *http.Request, responseHeader http.Header) (*websocket.Conn, error)
+}
+
+// SetWebSocketUpgrader allows injecting a custom upgrader (e.g., a mock in tests).
+func (h *Handler) SetWebSocketUpgrader(u WebSocketUpgrader) {
+	h.upgrader = u
+}
+
+// upgrade performs the HTTP→WebSocket upgrade using the configured upgrader.
+func (h *Handler) upgrade(w http.ResponseWriter, r *http.Request) (*websocket.Conn, error) {
+	if h.upgrader == nil {
+		return nil, fmt.Errorf("websocket upgrader not configured")
+	}
+	return h.upgrader.Upgrade(w, r, nil)
 }
 
 // HandleWebSocket handles the WebSocket upgrade and connection
@@ -58,7 +78,7 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Upgrade connection
-	conn, err := upgrader.Upgrade(w, r, nil)
+	conn, err := h.upgrade(w, r)
 	if err != nil {
 		h.logger.Printf("websocket upgrade error: %v", err)
 		return
