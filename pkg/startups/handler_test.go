@@ -53,6 +53,12 @@ func (m *mockStartupService) DeleteAllStartups(ctx context.Context) error {
 	return args.Error(0)
 }
 
+func (m *mockStartupService) ListStartupsByUser(ctx context.Context, uuid string) ([]Startup, error) {
+	args := m.Called(ctx, uuid)
+	startups, _ := args.Get(0).([]Startup)
+	return startups, args.Error(1)
+}
+
 func setupRouter(service StartupService) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
