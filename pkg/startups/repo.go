@@ -148,4 +148,5 @@ func (r *postgresStartupRepository) ListStartupsByUser(ctx context.Context, uuid
 		}
 		startups = append(startups, s)
 	}
+	return startups, nil
 }
