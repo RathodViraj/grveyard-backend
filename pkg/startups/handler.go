@@ -35,8 +35,8 @@ func (h *StartupHandler) RegisterRoutes(router *gin.Engine) {
 	router.DELETE("/startups/:id", h.deleteStartup)
 	router.DELETE("/startups", h.deleteAllStartups)
 	router.GET("/startups", h.listStartups)
+	router.GET("/startups/user/:uuid", h.ListStartupsByUser)
 	router.GET("/startups/:id", h.getStartupByID)
-	router.GET("/startups/:uuid", h.ListStartupsByUser)
 }
 
 type createStartupRequest struct {
@@ -260,7 +260,7 @@ func (h *StartupHandler) deleteAllStartups(c *gin.Context) {
 // @Param        uuid   path      string  true  "user UUID"
 // @Success      200  {object}  response.APIResponse{data=StartupList} "Startups retrieved successfully"
 // @Failure      500  {object}  response.APIResponse "Internal server error"
-// @Router       /startups/{id} [get]
+// @Router       /startups/user/{uuid} [get]
 func (h *StartupHandler) ListStartupsByUser(c *gin.Context) {
 	uuid := c.Param("uuid")
 
