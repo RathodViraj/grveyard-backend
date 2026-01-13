@@ -136,7 +136,7 @@ func (r *postgresStartupRepository) ListStartupsByUser(ctx context.Context, uuid
 
 	rows, err := r.pool.Query(ctx, query, uuid)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 	defer rows.Close()
 
@@ -144,7 +144,7 @@ func (r *postgresStartupRepository) ListStartupsByUser(ctx context.Context, uuid
 	for rows.Next() {
 		var s Startup
 		if err := rows.Scan(&s.ID, &s.Name, &s.Description, &s.LogoURL, &s.OwnerUUID, &s.Status, &s.CreatedAt); err != nil {
-			return nil, 0, err
+			return nil, err
 		}
 		startups = append(startups, s)
 	}
