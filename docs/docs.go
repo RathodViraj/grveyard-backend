@@ -730,26 +730,26 @@ const docTemplate = `{
         },
         "/startups/{id}": {
             "get": {
-                "description": "Retrieves a single startup by its ID",
+                "description": "Retrieves startups by user's UUID",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "startups"
                 ],
-                "summary": "Get startup by ID",
+                "summary": "Get startups by UUID",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "Startup ID",
-                        "name": "id",
+                        "type": "string",
+                        "description": "user UUID",
+                        "name": "uuid",
                         "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Startup retrieved successfully",
+                        "description": "Startups retrieved successfully",
                         "schema": {
                             "allOf": [
                                 {
@@ -759,23 +759,11 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/startups.Startup"
+                                            "$ref": "#/definitions/startups.StartupList"
                                         }
                                     }
                                 }
                             ]
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid startup ID",
-                        "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Startup not found",
-                        "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
                         }
                     },
                     "500": {

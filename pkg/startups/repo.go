@@ -17,6 +17,7 @@ type StartupRepository interface {
 	DeleteAllStartups(ctx context.Context) error
 	GetStartupByID(ctx context.Context, id int64) (Startup, error)
 	ListStartups(ctx context.Context, limit, offset int) ([]Startup, int64, error)
+	ListStartupsByUser(ctx context.Context, uuid string) ([]Startup, error)
 }
 
 type postgresStartupRepository struct {
@@ -128,4 +129,23 @@ func (r *postgresStartupRepository) ListStartups(ctx context.Context, limit, off
 func (r *postgresStartupRepository) DeleteAllStartups(ctx context.Context) error {
 	_, err := r.pool.Exec(ctx, "UPDATE startups SET is_deleted = true WHERE is_deleted = false")
 	return err
+}
+
+func (r *postgresStartupRepository) ListStartupsByUser(ctx context.Context, uuid string) ([]Startup, error) {
+	query := `SELECT * FROM startups WHERE owner_uuid = $1`
+
+	rows, err := r.pool.Query(ctx, query, uuid)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	startups := make([]Startup, 0)
+	for rows.Next() {
+		var s Startup
+		if err := rows.Scan(&s.ID, &s.Name, &s.Description, &s.LogoURL, &s.OwnerUUID, &s.Status, &s.CreatedAt); err != nil {
+			return nil, 0, err
+		}
+		startups = append(startups, s)
+	}
 }

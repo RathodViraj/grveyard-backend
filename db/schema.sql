@@ -23,6 +23,10 @@ CREATE TABLE IF NOT EXISTS startups (
     status TEXT NOT NULL CHECK (status IN ('active', 'failed', 'sold')) DEFAULT 'failed',
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    -- revenue NUMERIC(12,2) DEFAULT 0.00,
+    -- profit NUMERIC(12,2) DEFAULT 0.00,
+    -- priority SMALLINT NOT NULL DEFAULT 0,
+    -- intrested_buyers INT NOT NULL DEFAULT 0,
 
     CONSTRAINT fk_startups_owner_uuid
         FOREIGN KEY (owner_uuid)
@@ -48,6 +52,8 @@ CREATE TABLE IF NOT EXISTS assets (
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    -- priority SMALLINT NOT NULL DEFAULT 0,
+    -- interested_buyers INT NOT NULL DEFAULT 0,
 
     CONSTRAINT fk_assets_user
         FOREIGN KEY (user_uuid)

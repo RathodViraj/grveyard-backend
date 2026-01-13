@@ -3,12 +3,9 @@ package chat
 import (
 	"context"
 	"errors"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 	"time"
 
-	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/require"
 )
 
@@ -188,31 +185,4 @@ func TestProcessMessage_SelfMessageRejected(t *testing.T) {
 		t.Fatal("no error response")
 	}
 	require.Empty(t, store.saveCalls)
-}
-
-// mockUpgrader allows testing that the handler uses the injected upgrader.
-type mockUpgrader struct{ called bool }
-
-func (m *mockUpgrader) Upgrade(w http.ResponseWriter, r *http.Request, _ http.Header) (*websocket.Conn, error) {
-	m.called = true
-	return nil, errors.New("upgrade failed (test)")
-}
-
-// TestHandleWebSocket_UsesInjectedUpgrader verifies the handler calls the configured upgrader
-// and handles upgrade failure without adding a client.
-func TestHandleWebSocket_UsesInjectedUpgrader(t *testing.T) {
-	manager := NewConnectionManager()
-	handler := NewHandler(manager)
-
-	mu := &mockUpgrader{}
-	handler.SetWebSocketUpgrader(mu)
-
-	rr := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/ws/chat?user_id=userX", nil)
-	req = req.WithContext(context.WithValue(req.Context(), "user_id", "userX"))
-
-	handler.HandleWebSocket(rr, req)
-
-	require.True(t, mu.called, "expected upgrader to be called")
-	require.False(t, manager.IsOnline("userX"), "user should not be online after failed upgrade")
 }

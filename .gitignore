@@ -2,6 +2,6 @@
 .env.local
 db/postgresSQL.local.go
 *.log
-temp/
 bin
-*.md
+.md
+temp

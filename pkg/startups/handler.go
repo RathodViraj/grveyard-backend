@@ -36,6 +36,7 @@ func (h *StartupHandler) RegisterRoutes(router *gin.Engine) {
 	router.DELETE("/startups", h.deleteAllStartups)
 	router.GET("/startups", h.listStartups)
 	router.GET("/startups/:id", h.getStartupByID)
+	router.GET("/startups/:uuid", h.ListStartupsByUser)
 }
 
 type createStartupRequest struct {
@@ -250,4 +251,25 @@ func (h *StartupHandler) deleteAllStartups(c *gin.Context) {
 	}
 
 	response.SendAPIResponse(c, http.StatusOK, true, "all startups deleted", nil)
+}
+
+// @Summary      Get startups by UUID
+// @Description  Retrieves startups by user's UUID
+// @Tags         startups
+// @Produce      json
+// @Param        uuid   path      string  true  "user UUID"
+// @Success      200  {object}  response.APIResponse{data=StartupList} "Startups retrieved successfully"
+// @Failure      500  {object}  response.APIResponse "Internal server error"
+// @Router       /startups/{id} [get]
+func (h *StartupHandler) ListStartupsByUser(c *gin.Context) {
+	uuid := c.Param("uuid")
+
+	startups, err := h.service.ListStartupsByUser(c.Request.Context(), uuid)
+	if err != nil {
+		response.SendAPIResponse(c, http.StatusInternalServerError, false, err.Error(), nil)
+		return
+	}
+
+	StartupList := StartupList{Items: startups, Total: int64(len(startups))}
+	response.SendAPIResponse(c, http.StatusOK, true, "startup fetched by uuid", StartupList)
 }
